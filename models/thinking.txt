@@ -1,0 +1,12 @@
+users -> admin, instructor, students
+
+instructor (user) has many courses 
+course has one instructor
+course has many students/admins?
+
+course has many assignments
+assignment has one course 
+
+assignment has many submissions
+submission has one assignment
+submission has one student 
