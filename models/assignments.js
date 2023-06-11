@@ -2,7 +2,7 @@ const db = require('../lib/sequelize')
 const { DataTypes } = require("sequelize")
 
 const assignmentSchemaSQL = {
-    courseId: { type: DataTypes.INTEGER, allowNull: false },
+    // courseId: { type: DataTypes.INTEGER, allowNull: false },
     title: { type: DataTypes.STRING, allowNull: false },
     points: { type: DataTypes.INTEGER, allowNull: false },
     due: { type: DataTypes.DATE, allowNull: false },

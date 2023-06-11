@@ -9,4 +9,6 @@ assignment has one course
 
 assignment has many submissions
 submission has one assignment
+
+one student can make multiple submissions
 submission has one student 

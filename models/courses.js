@@ -8,7 +8,7 @@ const courseSchemaSQL = {
     number: { type: DataTypes.STRING, allowNull: false },
     title: { type: DataTypes.STRING, allowNull: false },
     term: { type: DataTypes.STRING, allowNull: false },
-    instructorId: { type: DataTypes.INTEGER, allowNull: false }, //<-- foreign key
+    // instructorId: { type: DataTypes.INTEGER, allowNull: false }, //<-- foreign key
     // Students for enrollment??
 }
 
