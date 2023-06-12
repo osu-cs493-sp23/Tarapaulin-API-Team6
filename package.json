@@ -24,6 +24,7 @@
   "homepage": "https://github.com/osu-cs493-sp23/final-project-team6#readme",
   "dependencies": {
     "bcrypt": "^5.1.0",
+    "bcryptjs": "^2.4.3",
     "dotenv": "^16.1.4",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.0",
