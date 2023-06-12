@@ -23,9 +23,9 @@ Course.belongsTo(User, {
   });
 
 // Course has many students (and admins?)
-Course.hasMany(User, { through: 'CourseStudent', as: 'students' })
+Course.belongsToMany(User, { through: 'CourseStudent', as: 'students' })
 // User has many courses
-User.hasMany(Course, { through: 'CourseStudent', as: 'courses' })
+User.belongsToMany(Course, { through: 'CourseStudent', as: 'courses' })
 
 /* 
     Course and Assignment Association
@@ -57,3 +57,10 @@ User.hasMany(Submission, {
 })
 Submission.belongsTo(User)
 
+
+module.exports = {
+    Course,
+    Assignment,
+    Submission,
+    User
+}
