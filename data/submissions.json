@@ -1,0 +1,56 @@
+[
+    {
+        "assignmentid": 1,
+        "studentid": 4,
+        "timestamp": "2022-06-13T17:00:00-07:00",
+        "grade": 5,
+        "file": "..."
+    },
+    {
+        "assignmentid": 1,
+        "studentid": 5,
+        "timestamp": "2022-06-14T17:00:00-06:00",
+        "file": "..."
+    },
+    {
+        "assignmentid": 2,
+        "studentid": 6,
+        "timestamp": "2022-06-13T17:00:00-07:00",
+        "file": "..."
+    },
+    {
+        "assignmentid": 3,
+        "studentid": 8,
+        "timestamp": "2022-06-24T17:00:00-07:00",
+        "grade": 29,
+        "file": "..."
+    },
+    {
+        "assignmentid": 4,
+        "studentid": 7,
+        "timestamp": "2022-12-03T17:00:00-07:00",
+        "grade": 1,
+        "file": "..."
+    },
+    {
+        "assignmentid": 6,
+        "studentid": 4,
+        "timestamp": "2022-07-09T17:00:00-07:00",
+        "grade": 118,
+        "file": "..."
+    },
+    {
+        "assignmentid": 8,
+        "studentid": 7,
+        "timestamp": "2022-04-09T17:00:00-07:00",
+        "grade": 7,
+        "file": "..."
+    },
+    {
+        "assignmentid": 8,
+        "studentid": 6,
+        "timestamp": "2022-04-09T17:00:00-07:00",
+        "grade": 4,
+        "file": "..."
+    }
+]

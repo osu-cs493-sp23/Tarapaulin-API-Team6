@@ -1,0 +1,56 @@
+[
+    {
+        "courseid": 1,
+        "title": "Quiz 1",
+        "points": 5,
+        "due": "2022-06-14T17:00:00-07:00"
+    },
+    {
+       "courseid": 1,
+        "title": "Assignment 1",
+        "points": 100,
+        "due": "2022-06-17T17:00:00-07:00"
+    },
+    {
+       "courseid": 1,
+        "title": "Bonus Assignment",
+        "points": 30,
+        "due": "2022-06-24T17:00:00-07:00"
+    },
+    {
+       "courseid": 2,
+        "title": "Intro Quiz",
+        "points": 5,
+        "due": "2022-12-05T17:00:00-07:00"
+    },
+    {
+       "courseid": 2,
+        "title": "Homework 1",
+        "points": 30,
+        "due": "2022-12-10T17:00:00-07:00"
+    },
+    {
+       "courseid": 3,
+        "title": "Coding Assignment 1",
+        "points": 120,
+        "due": "2022-07-10T17:00:00-07:00"
+    },
+    {
+       "courseid": 3,
+        "title": "Coding Assignment 1.5",
+        "points": 10,
+        "due": "2022-07-14T17:00:00-07:00"
+    },
+    {
+       "courseid": 4,
+        "title": "Quiz 1",
+        "points": 9,
+        "due": "2022-04-09T17:00:00-07:00"
+    },
+    {
+       "courseid": 4,
+        "title": "Assignment 1",
+        "points": 55,
+        "due": "2022-04-23T17:00:00-07:00"
+    }
+]

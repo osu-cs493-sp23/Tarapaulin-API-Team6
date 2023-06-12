@@ -1,0 +1,50 @@
+[
+    {
+        "name": "Gordon 'the nut' Ryan",
+        "email": "gdr@gmail.com",
+        "password": "iamthebest",
+        "role": "admin"
+    },
+    {
+        "name": "Robin Hess",
+        "email": "rhess@oregonstate.edu",
+        "password": "isecretlyhatewebdev",
+        "role": "instructor"
+    },
+    {
+        "name": "Mike Bailey",
+        "email": "mbailey@oregonstate.edu",
+        "password": "parallelizethis",
+        "role": "instructor"
+    },
+    {
+        "name": "George Lucas",
+        "email": "glucas@gmail.com",
+        "password": "imadestartrek",
+        "role": "student"
+    },
+    {
+        "name": "Randy Marsh",
+        "email": "rmarsh@gmail.com",
+        "password": "dewmaker",
+        "role": "student"
+    },
+    {
+        "name": "Rataouille Rat",
+        "email": "rrat@gmail.com",
+        "password": "rat from ratatouille",
+        "role": "student"
+    },
+    {
+        "name": "Mike Hunt",
+        "email": "mhunt@gmail.com",
+        "password": "lmfao",
+        "role": "student"
+    },
+    {
+        "name": "Seymour Boots",
+        "email": "sboots@gmail.com",
+        "password": "gottem",
+        "role": "student" 
+    }
+]

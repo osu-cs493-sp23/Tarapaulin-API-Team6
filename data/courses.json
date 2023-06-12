@@ -1,0 +1,30 @@
+[
+    {
+        "subject": "CS",
+        "number": "493",
+        "title": "Cloud Application Development",
+        "term": "sp2022",
+        "instructorid": 2
+    },
+    {
+        "subject": "MTH",
+        "number": "212",
+        "title": "Discrete Math",
+        "term": "wi2020",
+        "instructorid": 2
+    },
+    {
+        "subject": "ENGR",
+        "number": "103",
+        "title": "Basic Computer Science",
+        "term": "fa2021",
+        "instructorid": 3
+    },
+    {
+        "subject": "CS",
+        "number": "162",
+        "title": "Advanced Computer Science",
+        "term": "wi2020",
+        "instructorid": 3
+    }
+]
