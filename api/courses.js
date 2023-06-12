@@ -1,12 +1,15 @@
 const router = require('express').Router();
 
-const { validateAgainstSchema } = require('../lib/validation')
+const { validateAgainstSchema, detectUnknownFieldsAgainstSchema } = require('../lib/validation')
 
 
 const { CourseSchema,
         insertNewCourse,
         getCoursesPage,
-        getCourseById } = require('../models/courses')
+        getCourseById, 
+        getStudentsByCourseId,
+        editCourseById,
+        removeCourseById} = require('../models/courses')
 
 /* 
  * Route to get all courses (Paginated)
@@ -73,21 +76,50 @@ router.get('/:id', async (req, res, next) => {
  * Route to update a course by Id
  */
 router.patch('/:id', async (req, res, next) => {
-
+    if(detectUnknownFieldsAgainstSchema(req.body, CourseSchema)) {
+        try {
+            const course = await editCourseById(req.params.id, req.body)
+            if (course) {
+                res.status(200).send(course)
+            } else {
+                next()
+            }
+        } catch (err) {
+            next(err)
+        }
+    } else {
+        res.status(400).send({
+            error: "Request body does not contain a valid Course object update"
+        })
+    }
 })
 
 /* 
  * Route to delete a course by Id
  */
 router.delete('/:id', async (req, res, next) => {
-
+    const result = await removeCourseById(req.params.id)
+    if(result) {
+        res.status(204).send()
+    } else {
+        next();
+    }
 })
 
 /* 
  * Route to get students in a course
  */
 router.get('/:id/students', async (req, res, next) => {
-
+    try {
+        const course = await getStudentsByCourseId(req.params.id)
+        if (course) {
+            res.status(200).send(course)
+        } else {
+            next()
+        }
+    } catch (err) {
+        next(err)
+    }
 })
 
 /* 
