@@ -42,7 +42,6 @@ async function insertNewUser(user){
     user = extractValidFields(user, userSchema)
     const db = getDbReference()
     const collection = db.collection('users')
-    console.log(user)
     const result = await collection.insertOne(user)
     return result.insertedId
 }
