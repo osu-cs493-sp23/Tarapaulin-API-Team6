@@ -8,6 +8,7 @@ const userSchema = {
     password: { required: true },
     role: {  required: true }
 }
+exports.userSchema = userSchema
 
 const userFields = [
     'name',
@@ -16,8 +17,8 @@ const userFields = [
     'role',
     'courses'
 ]
+exports.userFields = userFields
 
-module.exports = { userSchema, userFields }
 
 /* 
  * Returns null if userId or user document is not found otherwise returns the user
@@ -41,7 +42,8 @@ async function insertNewUser(user){
     user = extractValidFields(user, userSchema)
     const db = getDbReference()
     const collection = db.collection('users')
-    const result = collection.insertOne(user)
+    console.log(user)
+    const result = await collection.insertOne(user)
     return result.insertedId
 }
 exports.insertNewUser = insertNewUser
