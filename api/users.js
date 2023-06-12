@@ -6,7 +6,8 @@ const { validateAgainstSchema } = require('../lib/validation');
 const { getDbReference } = require('../lib/mongo')
 
 const { userSchema,
-        insertNewUser } = require('../models/users')
+        insertNewUser,
+        getUsers } = require('../models/users')
 
 
 
@@ -16,7 +17,6 @@ const { userSchema,
 router.post('/', isAdminLoggedIn, async (req, res, next) => {
     if(validateAgainstSchema(req.body, userSchema)){
         try {
-            console.log(req.isUserAdmin)
             // Admin Handling
             if( req.body.role == "admin" ){
                 if(!req.isUserAdmin){
@@ -70,6 +70,19 @@ router.post('/login', async (req, res, next) => {
  * Route to get data about a specific user
  */
 router.get('/:id', async (req, res, next) => {
+
+})
+
+/*
+ * debug route for getting all users and displaying Ids
+ */
+router.get('/', async (req, res, next) => {
+    try {
+        const users = await getUsers()
+        res.status(200).send(users)
+    } catch (err) {
+        next(err)
+    }
 
 })
 
