@@ -9,10 +9,17 @@ const express = require('express')
 const morgan = require('morgan')
 
 const api = require('./api')
-const sequelize = require('./lib/sequelize')
+const { connectToDb } = require('./lib/mongo')
 
 const app = express()
 const port = process.env.PORT || 8000
+
+
+/*  
+ *  Run mongoDB server:
+ *    docker run -d --name mongo-server -p "27017:27017" -e "MONGO_INITDB_ROOT_USERNAME=root" -e "MONGO_INITDB_ROOT_PASSWORD=password" -e "MONGO_INITDB_DATABASE=Tarpaulin"  mongo:latest
+ */
+
 
 /*
  * Morgan is a popular request logger.
@@ -47,10 +54,10 @@ app.use('*', function (err, req, res, next) {
 
 /*
  * Start the API server listening for requests after establishing a connection
- * to the MySQL server.
+ * to the MongoDB server.
  */
-sequelize.sync().then(function () {
-  app.listen(port, function() {
-    console.log("== Server is running on port", port)
+connectToDb(async function () {
+  app.listen(port, function () {
+      console.log("== Server is running on port", port)
   })
 })
