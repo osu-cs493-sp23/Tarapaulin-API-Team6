@@ -1,7 +1,5 @@
 const router = require('express').Router();
 
-exports.router = router
-
 /* 
  * Route to get all courses (Paginated)
  */
@@ -66,6 +64,6 @@ router.get('/:id/assignments', async (req, res, next) => {
 })
 
 
-
+module.exports = router
 
 
