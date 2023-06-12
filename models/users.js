@@ -1,5 +1,3 @@
-// CLEAN: const db = require('../lib/sequelize')
-
 const { ObjectId } = require("mongodb")
 const { getDbReference } = require('../lib/mongo')
 const { extractValidFields } = require('../lib/validation')
@@ -31,7 +29,7 @@ async function getUserById(userId){
     if (!ObjectId.isValid(userId)){
         return null
     }else{
-        const users = await collection.findOne({ "_id": userId})
+        const users = await collection.findOne({ _id: new ObjectId(userId)})
         if (users){
             return users
         }else{
