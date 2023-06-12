@@ -26,16 +26,11 @@ async function getUserById(userId){
     const db = getDbReference()
     const collection = db.collection('users')
 
-    if (!ObjectId.isValid(userId)){
-        return null
-    }else{
-        const users = await collection.findOne({ _id: new ObjectId(userId)})
-        if (users){
-            return users
-        }else{
-            return null
-        }
+    let users = null
+    if (ObjectId.isValid(userId)){
+        users = await collection.findOne({ _id: new ObjectId(userId)})
     }
+    return users;
 }
 exports.getUserById = getUserById
 
