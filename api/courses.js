@@ -1,6 +1,7 @@
 const router = require('express').Router();
 
 const { validateAgainstSchema, detectUnknownFieldsAgainstSchema } = require('../lib/validation')
+const { isAdminLoggedIn, requireAuthentication } = require('../lib/auth')
 
 
 const { CourseSchema,
@@ -39,19 +40,25 @@ router.get('/', async (req, res, next) => {
 /* 
  * Route to create a new course
  */
-router.post('/', async (req, res, next) => {
-    if (validateAgainstSchema(req.body, CourseSchema)) {
-        try {
-            const id = await insertNewCourse(req.body)
-            res.status(201).send({
-                id: id
+router.post('/', isAdminLoggedIn, async (req, res, next) => {
+    if(req.isUserAdmin){
+        if (validateAgainstSchema(req.body, CourseSchema)) {
+            try {
+                const id = await insertNewCourse(req.body)
+                res.status(201).send({
+                    id: id
+                })
+            } catch (err) {
+                next(err)
+            }
+        } else {
+            res.status(400).send({
+                error: "Request body is not a valid Course object."
             })
-        } catch (err) {
-            next(err)
         }
     } else {
-        res.status(400).send({
-            error: "Request body is not a valid Course object."
+        res.status(403).send({
+            error: "User does not have permission to preform this action."
         })
     }
 })
@@ -75,14 +82,21 @@ router.get('/:id', async (req, res, next) => {
 /* 
  * Route to update a course by Id
  */
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', requireAuthentication, async (req, res, next) => {
     if(detectUnknownFieldsAgainstSchema(req.body, CourseSchema)) {
         try {
-            const course = await editCourseById(req.params.id, req.body)
-            if (course) {
-                res.status(200).send(course)
+            const instructorId = (await getCourseById(req.params.id)).instructorId
+            if(instructorId == req.user.id || req.user.role == "admin"){
+                const course = await editCourseById(req.params.id, req.body)
+                if (course) {
+                    res.status(200).send(course)
+                } else {
+                    next()
+                }
             } else {
-                next()
+                res.status(403).send({
+                    error: "User does not have permission to preform this action."
+                })
             }
         } catch (err) {
             next(err)

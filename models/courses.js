@@ -81,7 +81,7 @@ async function getCourseById(id) {
             { $project: { students: 0, assignments: 0 } }
         ]).toArray()
 
-        return { courses: results[0] }
+        return results[0]
     }
 }
 exports.getCourseById = getCourseById
