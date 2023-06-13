@@ -5,7 +5,7 @@ const {
   validateAgainstSchema,
   detectUnknownFieldsAgainstSchema,
 } = require("../lib/validation");
-const { isAdminLoggedIn, requireAuthentication } = require("../lib/auth");
+const { isAdminLoggedIn, requireAuthentication, nonBlockingAuthentication } = require("../lib/auth");
 
 const {
   CourseSchema,
@@ -25,7 +25,7 @@ const { rateLimit } = require("../lib/redis");
 /*
  * Route to get all courses (Paginated)
  */
-router.get("/", async (req, res, next) => {
+router.get("/", nonBlockingAuthentication, rateLimit, async (req, res, next) => {
   try {
     /*
      * Fetch page info, generate HATEOAS links for surrounding pages and then
@@ -63,7 +63,7 @@ router.get("/debug/", async (req, res, next) => {
 /*
  * Route to create a new course
  */
-router.post("/", isAdminLoggedIn, async (req, res, next) => {
+router.post("/", isAdminLoggedIn, rateLimit, async (req, res, next) => {
   if (req.isUserAdmin) {
     if (validateAgainstSchema(req.body, CourseSchema)) {
       try {
@@ -89,7 +89,7 @@ router.post("/", isAdminLoggedIn, async (req, res, next) => {
 /*
  * Route to get course by Id
  */
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", nonBlockingAuthentication, rateLimit, async (req, res, next) => {
   try {
     const course = await getCourseById(req.params.id);
     if (course) {
@@ -105,7 +105,7 @@ router.get("/:id", async (req, res, next) => {
 /*
  * Route to update a course by Id
  */
-router.patch("/:id", requireAuthentication, async (req, res, next) => {
+router.patch("/:id", requireAuthentication, rateLimit, async (req, res, next) => {
   if (detectUnknownFieldsAgainstSchema(req.body, CourseSchema)) {
     try {
       const reqCourse = await getCourseById(req.params.id);

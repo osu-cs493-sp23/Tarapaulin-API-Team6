@@ -17,7 +17,7 @@ const { rateLimit } = require('../lib/redis');
 /* 
  * Route to create a new user
  */
-router.post('/', isAdminLoggedIn, async (req, res, next) => {
+router.post('/', isAdminLoggedIn, rateLimit, async (req, res, next) => {
     if(validateAgainstSchema(req.body, userSchema)){
         try {
             // Admin Handling
@@ -46,13 +46,14 @@ router.post('/', isAdminLoggedIn, async (req, res, next) => {
 /* 
  * Route to log in a user
  */
-router.post('/login', async (req, res, next) => {
+router.post('/login', rateLimit, async (req, res, next) => {
     loginSchema = { email: {required: true}, password: {required: true} }
     if (validateAgainstSchema(req.body, loginSchema)) {
         try {
             const user = (await getDbReference().collection('users').aggregate([
                 { $match: { email: req.body.email }}
             ]).toArray())[0]
+            if(!user){}
             if (bcrypt.compareSync(req.body.password, user.password)) {
                 token = generateAuthToken(user)
                 res.status(200).send({ token: token })
@@ -72,7 +73,7 @@ router.post('/login', async (req, res, next) => {
 /* 
  * Route to get data about a specific user
  */
-router.get('/:id', requireAuthentication, async (req, res, next) => {
+router.get('/:id', requireAuthentication, rateLimit, async (req, res, next) => {
     if(req.user.id == req.params.id || req.user.role == "admin"){
         const id = req.params.id
         try{
