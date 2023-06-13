@@ -173,11 +173,13 @@ router.post('/:id/submissions', requireAuthentication, rateLimit, async (req, re
 
     if (authorized){
         try{
-            const subs = null
+            const subs = await insertSubmissionToAssignmentById(id, req.body)
             if (subs){
-
+                res.status(201).send({ id: subs.id})
+            }else if (subs === null){
+                res.status(404).send({ error: "Specific assignment id not found"})
             }else{
-
+                res.status(400).send({ error: "Invalid submission object" })
             }
         }catch(err){
             next(err)

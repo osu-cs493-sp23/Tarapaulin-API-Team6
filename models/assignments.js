@@ -141,6 +141,19 @@ async function getAssignmentSubmissionsById(id, pageNum, studentId = null){
             }},
             { $project: { submissions: 1 } }
         ]).toArray()
+
+       if (studentId){
+            if (!ObjectId.isValid(studentId)){
+                return null
+            }
+
+            subs = subs.array.forEach(submission => {
+                if (submission.studentId == new ObjectId(studentId)){
+                    return submission
+                }
+            });
+       }
+        
     }
 
     return subs
@@ -149,8 +162,9 @@ exports.getAssignmentSubmissionsById = getAssignmentSubmissionsById
 
 /* 
  * Appends a new submission to an existing assignment
- * if it fails to find a matching assignment or the submission object is incorrect it will return undefined
- * Otherwise it will return the result of the update
+ * will return null if id is invalid
+ * will return undefined if incorrect submission format
+ * will return result if able to add submission
  */
 // FIXME: have to change in case assignment doesnt start with any submissions
 async function insertSubmissionToAssignmentById(id, submission){
@@ -160,14 +174,19 @@ async function insertSubmissionToAssignmentById(id, submission){
     const collection = db.collection('assignments')
     
     let result = null
-    if (ObjectId.isValid(id) && submissionValues && Object.keys(submissionValues).length > 0){
-        result = await collection.updateOne(
-            { _id: new ObjectId(id) },
-            { $push: submissionValues}
-        )
+    if (ObjectId.isValid(id)){
+        if (submissionValues && Object.keys(submissionValues).length > 0){
+            result = await collection.updateOne(
+                { _id: new ObjectId(id) },
+                { $push: submissionValues}
+            )
+            return result
+        }else{
+            return undefined
+        }
+    }else{
+        return null
     }
-
-    return result?.matchedCount > 0 ? result : undefined;
 }
 exports.insertSubmissionToAssignmentById = insertSubmissionToAssignmentById
 
