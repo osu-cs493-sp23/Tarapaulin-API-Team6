@@ -19,7 +19,7 @@ const { ObjectId } = require('mongodb');
 /* 
  * Route to create a new assignment
  */
-router.post('/', async (req, res, next) => {
+router.post('/', requireAuthentication, async (req, res, next) => {
     const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
 
     if (validateAgainstSchema(req.body, assignmentSchema)){
