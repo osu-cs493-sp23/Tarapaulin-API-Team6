@@ -10,6 +10,7 @@ const morgan = require('morgan')
 
 const api = require('./api')
 const { connectToDb } = require('./lib/mongo')
+const { redisClient } = require('./lib/redis')
 
 const app = express()
 const port = process.env.PORT || 8000
@@ -54,10 +55,12 @@ app.use('*', function (err, req, res, next) {
 
 /*
  * Start the API server listening for requests after establishing a connection
- * to the MongoDB server.
+ * to the MongoDB server & the redis server.
  */
 connectToDb(async function () {
-  app.listen(port, function () {
-      console.log("== Server is running on port", port)
+  redisClient.connect().then(function () {
+    app.listen(port, function () {
+          console.log("== Server is running on port", port)
+    })
   })
 })
