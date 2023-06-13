@@ -191,31 +191,46 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
  * Route to get a list of all submissions for an assignment
  */
 router.get("/:id/submissions", requireAuthentication, rateLimit, async (req, res, next) => {
-    const id = req.params.id;
-    const page = parseInt(req.query.page) || 1;
-    const studentId = req.query.studentId || null;
-    const authorized =
-      req?.user &&
-      req?.user?.role &&
-      (req?.user?.role == "instructor" || req?.user?.role == "admin");
-    // TODO: fix auth
-    if (authorized) {
-      try {
-        const submissions = await getAssignmentSubmissionsById(id, page, studentId);
-        if (submissions) {
-          res.send(submissions);
-        } else {
-          console.log("no subs");
-          next();
-        }
-      } catch (err) {
-        next(err);
-      }
-    } else{
-        res.status(403).send({ error: "Unauthorized request made to get assignment submissions" })
-    }
+  const id = req.params.id;
+  const page = parseInt(req.query.page) || 1;
+  const studentId = req.query.studentId || null;
+
+  let courseId = null
+  let instructorId = null
+  try{
+    courseId = (await getAssignmentById(id))?.courseId
+    instructorId = (await getCourseById(courseId))?.instructorId;
+  }catch(err){
+    next(err)
   }
-);
+
+
+  const authorized =
+    req?.user &&
+    req?.user?.role &&
+    req?.user?.role == "instructor" &&
+    instructorId &&
+    instructorId == req?.user?.id;
+
+
+  const isAdmin = req?.user?.role == "admin"
+  // TODO: fix auth
+  if (authorized || isAdmin) {
+    try {
+      const submissions = await getAssignmentSubmissionsById(id, page, studentId);
+      if (submissions) {
+        res.send(submissions);
+      } else {
+        console.log("no subs");
+        next();
+      }
+    } catch (err) {
+      next(err);
+    }
+  } else{
+      res.status(403).send({ error: "Unauthorized request made to get assignment submissions" })
+  }
+});
 
 const fileTypes = {
   "application/pdf": "pdf",
@@ -247,6 +262,7 @@ const upload = multer({
 router.post("/:id/submissions", upload.single("file"), requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id;
     // TODO: fix auth (only student in that classs can submit)
+    // TODO: MAKE SURE ASSIGNMENT EXISTS BEFORE MAKING SUBMISSION
     if (req.file && req.body && req.body.studentId) {
       const submission = {
         contentType: req.file.mimetype,
