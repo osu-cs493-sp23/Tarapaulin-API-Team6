@@ -12,7 +12,11 @@ const {
     getAssignmentSubmissionsById,
     insertSubmissionToAssignmentById
 } = require('../models/assignments');
-const { addAssignmentsToCourseById, getCourseById } = require('../models/courses');
+const { addAssignmentsToCourseById, 
+        getCourseById, 
+        removeAssignmentsFromCourseById 
+} = require('../models/courses');
+
 const { ObjectId } = require('mongodb');
 const { rateLimit } = require('../lib/redis');
 const multer = require('multer')
@@ -28,6 +32,7 @@ router.post('/', requireAuthentication, rateLimit, async (req, res, next) => {
   if (validateAgainstSchema(req.body, assignmentSchema)) {
     const courseId = req?.body?.courseId
     const instructorId = (await getCourseById(courseId))?.instructorId;
+    // TOOD: FIX AUTH
     if (authorized && instructorId == req?.user?.id) {
       try {
         let assignmentId = await insertNewAssignment(req.body);
@@ -116,7 +121,7 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
   }catch(err){
     next(err)
   }
-  
+  // TODO: fix auth
   if (authorized && instructorId && instructorId == req?.user?.id) {
     try {
       const updated = await editAssignmentById(id, assignment);
@@ -140,17 +145,34 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
  * Route to delete a specific assignment
  */
 router.delete('/:id', requireAuthentication, async (req, res, next) => {
-    const id = req.params.id
-    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+  const id = req.params.id
+  let courseId = null
+  let instructorId = null
+  try{
+    courseId = (await getAssignmentById(id))?.courseId
+    instructorId = (await getCourseById(courseId))?.instructorId;
+  }catch(err){
+    next(err)
+  }
 
+  const authorized = req?.user && req?.user?.role && instructorId 
+                     && ((req?.user?.role == 'instructor' && instructorId == req?.user?.id) 
+                     || req?.user?.role == 'admin')
   if (authorized) {
     try {
-      const result = await removeAssignmentById(id);
-      if (result) {
-        res.status(204).send();
-      } else {
-        res.status(404).send({ error: "Delete assignment id not found" });
+      const assignments = [new ObjectId(id)]
+      let result = await removeAssignmentsFromCourseById(new ObjectId(courseId), assignments)
+      if (result){
+        result = await removeAssignmentById(id);
+        if (result) {
+          res.status(204).send();
+        } else {
+          res.status(404).send({ error: "Delete assignment id not found" });
+        }
+      }else{
+        res.status(404).send({ error: "Delete course id not found" });
       }
+      
     } catch (err) {
       next(err);
     }
@@ -172,7 +194,7 @@ router.get("/:id/submissions", requireAuthentication, rateLimit, async (req, res
       req?.user &&
       req?.user?.role &&
       (req?.user?.role == "instructor" || req?.user?.role == "admin");
-
+    // TODO: fix auth
     if (authorized) {
       try {
         const submissions = await getAssignmentSubmissionsById(id, page, studentId);
@@ -220,6 +242,7 @@ const upload = multer({
  */
 router.post("/:id/submissions", upload.single("file"), requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id;
+    // TODO: fix auth (only student in that classs can submit)
     if (req.file && req.body && req.body.studentId) {
       const submission = {
         contentType: req.file.mimetype,
