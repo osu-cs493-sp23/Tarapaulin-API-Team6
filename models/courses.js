@@ -197,7 +197,7 @@ async function getStudentsByCourseId(id) {
         const studentIds = ((await coursesCollection.aggregate([
             { $match: { _id: new ObjectId(id) } },
             { $project: { students: 1 } }
-        ]).toArray())[0]).students
+        ]).toArray())[0])?.students
         // Get student details 1-by-1
         if(!studentIds){
             return {students: []}
@@ -215,6 +215,37 @@ async function getStudentsByCourseId(id) {
     }
 }
 exports.getStudentsByCourseId = getStudentsByCourseId
+
+async function getAssignmentsByCourseId(id) {
+    const db = getDbReference()
+    const coursesCollection = db.collection('courses')
+    const assignmentsCollection = db.collection('assignments')
+
+    if (!ObjectId.isValid(id)) {
+        return null
+    } else {
+        // Get list of assignment ids for the course
+        const assignmentIds = ((await coursesCollection.aggregate([
+            { $match: { _id: new ObjectId(id) } },
+            { $project: { assignments: 1 } }
+        ]).toArray())[0])?.assignments
+        // Get assignment details 1-by-1
+        if(!assignmentIds){
+            return {assignments: []}
+        }
+        results = []
+        for( const assignment of assignmentIds ){
+            results.push(
+                (await assignmentsCollection.aggregate([
+                    { $match: {_id: new ObjectId(assignment) } }
+                ])
+                .toArray())[0]
+            )
+        }
+        return { assignments: results }
+    }
+}
+exports.getAssignmentsByCourseId = getAssignmentsByCourseId
 
 function convertToCSV(data) {
     const students = data.students;

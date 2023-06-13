@@ -19,6 +19,7 @@ const {
   addStudentsToCourseById,
   removeStudentsFromCourseById,
   convertToCSV,
+  getAssignmentsByCourseId,
 } = require("../models/courses");
 const { rateLimit } = require("../lib/redis");
 
@@ -271,6 +272,17 @@ router.get("/:id/roster", requireAuthentication, rateLimit, async (req, res, nex
 /*
  * Route to get assignments in a course
  */
-router.get("/:id/assignments", async (req, res, next) => {});
+router.get("/:id/assignments", nonBlockingAuthentication, rateLimit, async (req, res, next) => {
+    try {
+        const course = await getAssignmentsByCourseId(req.params.id);
+        if (course) {
+            res.status(200).send(course);
+        } else {
+            next();
+        }
+    } catch (err) {
+        next(err);
+    }
+  });
 
 module.exports = router;
