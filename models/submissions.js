@@ -24,7 +24,7 @@ async function bulkInsertNewSubmissions(submissions){
     const users = await getUsers()
     const assignments = await getAssignments()
     const submissionsToInsert = submissions.map(function (submissions) {
-        const fields = extractValidFields(submissions, submissionSchemaSQL)
+        const fields = extractValidFields(submissions, submissionSchema)
         fields.studentId = (users[fields.studentId - 1])._id
         fields.assignmentId = (assignments[fields.assignmentId - 1])._id
         return fields

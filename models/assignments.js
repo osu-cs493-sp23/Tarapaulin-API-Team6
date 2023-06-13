@@ -28,6 +28,19 @@ async function getAssignmentById(id){
 }
 exports.getAssignmentById = getAssignmentById
 
+
+/*
+ * Debug function for bulk adding
+ */
+async function getAssignments(){
+    const db = getDbReference()
+    const collection = db.collection('assignments')
+
+    const assignments = await collection.find({}).toArray()
+    return assignments
+}
+exports.getAssignments = getAssignments
+
 /* 
  * Inserts a new assignment into the DB. Returns promise that resolves to the ID of the newly-created assignment
  */
