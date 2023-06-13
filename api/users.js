@@ -2,7 +2,7 @@ const router = require('express').Router()
 const bcrypt = require('bcryptjs')
 const { ObjectId } = require('mongodb')
 
-const { requireAuthentication, generateAuthToken, isAdminLoggedIn} = require('../lib/auth');
+const { requireAuthentication, generateAuthToken, isAdminLoggedIn, nonBlockingAuthentication} = require('../lib/auth');
 const { validateAgainstSchema } = require('../lib/validation');
 const { getDbReference } = require('../lib/mongo')
 
@@ -113,7 +113,7 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
 /*
  * debug route for getting all users and displaying Ids
  */
-router.get('/', rateLimit, async (req, res, next) => {
+router.get('/', nonBlockingAuthentication, rateLimit, async (req, res, next) => {
     try {
         const users = await getUsers()
         res.status(200).send(users)
