@@ -144,10 +144,7 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
 /*
  * Route to get a list of all submissions for an assignment
  */
-router.get(
-  "/:id/submissions",
-  requireAuthentication,
-  async (req, res, next) => {
+router.get("/:id/submissions", requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id;
     const page = parseInt(req.query.page) || 1;
     const studentId = req.query.studentId || null;
@@ -155,10 +152,10 @@ router.get(
       req?.user &&
       req?.user?.role &&
       (req?.user?.role == "instructor" || req?.user?.role == "admin");
+
     if (authorized) {
       try {
-        const objectId = new ObjectId(id); // Convert id to ObjectId
-        const submissions = await getAssignmentSubmissionsById(objectId, page, studentId);
+        const submissions = await getAssignmentSubmissionsById(id, page, studentId);
         if (submissions) {
           res.send(submissions);
         } else {
@@ -201,10 +198,7 @@ const upload = multer({
 /*
  * Route to create a new submission for an assignment
  */
-router.post(
-  "/:id/submissions",
-  upload.single("file"),
-  async (req, res, next) => {
+router.post("/:id/submissions", upload.single("file"), requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id;
     if (req.file && req.body && req.body.assignmentId && req.body.studentId) {
       const submission = {

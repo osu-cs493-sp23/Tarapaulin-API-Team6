@@ -19,13 +19,13 @@ const { connectToDb, closeDbConnection } = require("./lib/mongo")
 
 connectToDb( async function () {
     users = await bulkInsertNewUser(userData)
+    console.log("== Bulk inserted into users")
     courses = await bulkInsertNewCourses(courseData)
+    console.log("== Bulk inserted into courses")
     assignments = await bulkInsertNewAssignments(assignmentData)
+    console.log("== Bulk inserted into assignments")
     submissions = await bulkInsertNewSubmissions(submissionData)
-    // await Course.bulkCreate(courseData, { fields: courseFields })
-    // await Assignment.bulkCreate(assignmentData, { fields: assignmentFields })
-    // await Submission.bulkCreate(submissionData, { fields: submissionFields })
-    //console.log(submissions)
+    console.log("== Bulk inserted into submissions")
 
     closeDbConnection(function () {
         console.log("== Init DB connection closed")

@@ -131,39 +131,35 @@ exports.removeAssignmentById = removeAssignmentById;
  * Returns a list of submissions if an assignment Id is valid otherwise returns null
  * Provide the assignment id and an optional studentId to get submissions only from that student
  */
-async function getAssignmentSubmissionsById(id,pageNum, studentId = null){
+async function getAssignmentSubmissionsById(id, pageNum, studentId = null){
     const db = getDbReference()
-    const asgnCollection = db.collection('assignments')
-    const subsCollection = db.collection('submissions')
     const bucket = new GridFSBucket(db, { bucketName: "submissions" });
-
-    // TODO: FINISH WHEN SUBMISSIONS DONE
+    const pageSize = 10
 
     let subs = null
     if (ObjectId.isValid(id)){
-        const pageSize = 1
-        subs = await bucket.find([
-            { $match: { _id: new ObjectId(id) } },
-            { $facet: {
-                metadata: [ { $count: "total" }, { $addFields: { page: parseInt(pageNum) } } ],
-                data: [ { $skip: 20 }, { $limit: pageSize } ]
-            }},
-            { $project: { submissions: 1 } }
-        ]).toArray()
-        //subs = await asgnCollection.find().toArray()
-        console.log(studentId)
-        console.log(subs)
-       if (studentId){
+        if (studentId){
             if (!ObjectId.isValid(studentId)){
                 return null
             }
 
-            subs = subs.forEach(submission => {
-                if (submission.studentId === new ObjectId(studentId)){
-                    return submission
-                }
-            });
-       }
+            subs = await bucket.find(
+                { "metadata.assignmentId": id, "metadata.studentId":studentId },
+                { skip: (pageNum-1)*pageSize, limit: pageSize }).toArray()
+        }else{
+            subs = await bucket.find(
+                { "metadata.assignmentId": id },
+                { skip: (pageNum-1)*pageSize, limit: pageSize }).toArray()
+        }
+
+        subs = {
+            submissions: subs,
+            page: pageNum,
+            pageSize: pageSize,
+            count: subs.length
+        }
+        console.log(studentId)
+        console.log(subs)
     }
         return subs
 
@@ -175,7 +171,6 @@ exports.getAssignmentSubmissionsById = getAssignmentSubmissionsById;
  * if it fails to find a matching assignment or the submission object is incorrect it will return undefined
  * Otherwise it will return the result of the update
  */
-// FIXME: have to change in case assignment doesnt start with any submissions
 async function insertSubmissionToAssignmentById(id, submission) {
   const submissionValues = extractValidFields(submission, submissionSchema);
   const db = getDbReference();
