@@ -1,7 +1,8 @@
 const router = require('express').Router();
 
 const { validateAgainstSchema, detectUnknownFieldsAgainstSchema } = require('../lib/validation')
-const { requireAuthentication } = require('../lib/auth')
+const { requireAuthentication, nonBlockingAuthentication } = require('../lib/auth')
+const { rateLimit } = require('../lib/redis')
 const {  
     assignmentSchema,
     getAssignmentById,
@@ -19,7 +20,7 @@ const { ObjectId } = require('mongodb');
 /* 
  * Route to create a new assignment
  */
-router.post('/', requireAuthentication, async (req, res, next) => {
+router.post('/', requireAuthentication, rateLimit, async (req, res, next) => {
     const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
 
     if (validateAgainstSchema(req.body, assignmentSchema)){
@@ -55,7 +56,7 @@ router.post('/', requireAuthentication, async (req, res, next) => {
 /* 
  * Route to get data about a specific assignment
  */
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', nonBlockingAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id
     try{
         const assignments = await getAssignmentById(id)
@@ -73,7 +74,7 @@ router.get('/:id', async (req, res, next) => {
 /* 
  * DEBUG: Route to get all assignment data
  */
-router.get('/', async (req, res, next) => {
+router.get('/', nonBlockingAuthentication, rateLimit, async (req, res, next) => {
     try{
         const assignments = await getAssignments()
 
@@ -90,7 +91,7 @@ router.get('/', async (req, res, next) => {
 /* 
  * Route to update data about a specific assignment
  */
-router.patch('/:id', requireAuthentication, async (req, res, next) => {
+router.patch('/:id', requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id
     const assignment = req.body
     const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
@@ -118,7 +119,7 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
 /* 
  * Route to delete a specific assignment
  */
-router.delete('/:id', requireAuthentication, async (req, res, next) => {
+router.delete('/:id', requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id
     const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
 
@@ -141,7 +142,7 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
 /* 
  * Route to get a list of all submissions for an assignment
  */
-router.get('/:id/submissions', requireAuthentication, async (req, res, next) => {
+router.get('/:id/submissions', requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id
     const page = parseInt(req.query.page) || 1
     const studentId = req.query.studentId || null
@@ -166,8 +167,24 @@ router.get('/:id/submissions', requireAuthentication, async (req, res, next) => 
 /* 
  * Route to create a new submission for an assignment
  */
-router.post('/:id/submissions', async (req, res, next) => {
+router.post('/:id/submissions', requireAuthentication, rateLimit, async (req, res, next) => {
+    const id = req.params.id
+    const authorized = req?.user && req?.user?.role && req?.user?.role == 'student' 
 
+    if (authorized){
+        try{
+            const subs = null
+            if (subs){
+
+            }else{
+
+            }
+        }catch(err){
+            next(err)
+        }
+    }else{
+        res.status(403).send({ error: "Unauthorized request made to create submissions" })
+    }
 })
 
 module.exports = router
