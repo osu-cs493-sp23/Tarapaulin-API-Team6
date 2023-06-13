@@ -1,5 +1,6 @@
 const router = require('express').Router()
 const bcrypt = require('bcryptjs')
+const { ObjectId } = require('mongodb')
 
 const { requireAuthentication, generateAuthToken, isAdminLoggedIn} = require('../lib/auth');
 const { validateAgainstSchema } = require('../lib/validation');
@@ -70,18 +71,41 @@ router.post('/login', async (req, res, next) => {
 /* 
  * Route to get data about a specific user
  */
-router.get('/:id', async (req, res, next) => {
-    const id = req.params.id
-    try{
-        const user = await getUserById(id)
-        console.log(user)
-        if (user){
-            res.status(200).send(user) 
-        }else{
-            next()
+router.get('/:id', requireAuthentication, async (req, res, next) => {
+    if(req.user.id == req.params.id || req.user.role == "admin"){
+        const id = req.params.id
+        try{
+            const user = await getUserById(id)
+            // console.log(user)
+            if (user){
+                const db = getDbReference()
+                const collection = db.collection('courses')
+
+                var courses = undefined
+                if(user.role == "instructor"){
+                    courses = await collection.aggregate([
+                        { $match: { instructorId: new ObjectId(id) } },
+                        { $project: { _id: 1 } } 
+                    ]).toArray()
+                } else if(user.role == "student"){
+                    courses = await collection.aggregate([
+                        { $match: { students: new ObjectId(id) } },
+                        { $project: { _id: 1 } }
+                    ]).toArray()
+                } else {
+                    courses = []
+                }
+                res.status(200).send({user: user, courses: courses}) 
+            }else{
+                next()
+            }
+        }   catch(err){
+            next(err)
         }
-    }catch(err){
-        next(err)
+    } else {
+        res.status(403).send({
+            error: "User does not have permission to preform this action."
+        })
     }
 })
 

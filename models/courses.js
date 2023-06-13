@@ -199,6 +199,9 @@ async function getStudentsByCourseId(id) {
             { $project: { students: 1 } }
         ]).toArray())[0]).students
         // Get student details 1-by-1
+        if(!studentIds){
+            return {students: []}
+        }
         results = []
         for( const student of studentIds ){
             results.push(
@@ -212,8 +215,6 @@ async function getStudentsByCourseId(id) {
     }
 }
 exports.getStudentsByCourseId = getStudentsByCourseId
-
-// Patch can use findAndModify
 
 function convertToCSV(data) {
     const students = data.students;
