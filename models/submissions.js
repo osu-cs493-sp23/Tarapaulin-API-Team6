@@ -19,8 +19,15 @@ const submissionSchema = {
  * assignment entries.
  */
 async function bulkInsertNewSubmissions(submissions){
+    const { getUsers } = require('./users')
+    const { getAssignments } = require('./assignments')
+    const users = await getUsers()
+    const assignments = await getAssignments()
     const submissionsToInsert = submissions.map(function (submissions) {
-        return extractValidFields(submissions, submissionSchemaSQL)
+        const fields = extractValidFields(submissions, submissionSchema)
+        fields.studentId = (users[fields.studentId - 1])._id
+        fields.assignmentId = (assignments[fields.assignmentId - 1])._id
+        return fields
     })
 
     const db = getDbReference()

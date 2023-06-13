@@ -24,9 +24,14 @@ async function insertNewCourse(course) {
 }
 exports.insertNewCourse = insertNewCourse
 
+
 async function bulkInsertNewCourses(courses){
+    const { getUsers } = require("./users")
+    const users = await getUsers()
     const coursesToInsert = courses.map(function (course) {
-        return extractValidFields(course, CourseSchema)
+        const fields = extractValidFields(course, CourseSchema)
+        fields.instructorId = (users[fields.instructorId - 1])._id
+        return fields
     })
 
     const db = getDbReference()
@@ -68,6 +73,18 @@ async function getCoursesPage(page) {
     }
 }
 exports.getCoursesPage = getCoursesPage
+
+async function getCourses() {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+    const count = await collection.countDocuments()
+
+    const results = await collection.find( {} )
+        .toArray()
+
+    return results
+}
+exports.getCourses = getCourses
 
 async function getCourseById(id) {
     const db = getDbReference()
