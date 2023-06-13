@@ -25,7 +25,7 @@ connectToDb( async function () {
     // await Course.bulkCreate(courseData, { fields: courseFields })
     // await Assignment.bulkCreate(assignmentData, { fields: assignmentFields })
     // await Submission.bulkCreate(submissionData, { fields: submissionFields })
-    console.log(submissions)
+    //console.log(submissions)
 
     closeDbConnection(function () {
         console.log("== Init DB connection closed")

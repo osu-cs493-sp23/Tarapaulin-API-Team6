@@ -24,6 +24,37 @@ async function insertNewCourse(course) {
 }
 exports.insertNewCourse = insertNewCourse
 
+async function addAssignmentToCourseById(id, assignment) {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+
+    const results = await collection.updateOne(
+        { _id: id },
+        { $push: { assignments: assignment }}
+    )
+    if(results.matchedCount == 0){
+        return undefined
+    }
+    return results
+}
+exports.addAssignmentToCourseById = addAssignmentToCourseById
+
+
+async function addStudentToCourseById(id, student) {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+
+    const results = await collection.updateOne(
+        { _id: id },
+        { $push: { students: student } }
+    )
+    if(results.matchedCount == 0){
+        return undefined
+    }
+    return results
+}
+exports.addStudentToCourseById = addStudentToCourseById
+
 
 async function bulkInsertNewCourses(courses){
     const { getUsers } = require("./users")
@@ -122,6 +153,7 @@ async function editCourseById(id, update) {
     }
 }
 exports.editCourseById = editCourseById
+
 
 async function removeCourseById(id) {
     const db = getDbReference()
