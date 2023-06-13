@@ -12,7 +12,7 @@ const {
     getAssignmentSubmissionsById,
     insertSubmissionToAssignmentById
 } = require('../models/assignments');
-const { addAssignmentToCourseById, getCourseById } = require('../models/courses');
+const { addAssignmentsToCourseById, getCourseById } = require('../models/courses');
 const { ObjectId } = require('mongodb');
 const { rateLimit } = require('../lib/redis');
 const multer = require('multer')
@@ -26,15 +26,26 @@ router.post('/', requireAuthentication, rateLimit, async (req, res, next) => {
   const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
 
   if (validateAgainstSchema(req.body, assignmentSchema)) {
-    const instructorId = (await getCourseById(req?.body?.courseId))?.instructorId;
+    const courseId = req?.body?.courseId
+    const instructorId = (await getCourseById(courseId))?.instructorId;
     if (authorized && instructorId == req?.user?.id) {
       try {
-        const assignmentId = await insertNewAssignment(req.body);
-        console.log("Assignment added id: ", assignmentId);
+        let assignmentId = await insertNewAssignment(req.body);
+
         if (assignmentId) {
-          res.status(201).send({
-            id: assignmentId,
-          });
+          const added = await addAssignmentsToCourseById(new ObjectId(courseId), [assignmentId])
+
+          if (added){
+            console.log("Assignment added id: ", assignmentId);
+            res.status(201).send({
+              id: assignmentId,
+            });
+          }else{
+            res.status(400).send({
+              error: "unable to add assignment to course",
+            });
+          }
+          
         } else {
           res.status(400).send({
             error: "unable to add assignment",
