@@ -23,6 +23,7 @@ You should now be able to inspect the MongoDb collections
 To create and run the redis server, run `./rredis.bat`
 
 ## Start the Server
+Install dependencies with `npm install`
 On the terminal, run `npm start`
 
 ## Init the db
