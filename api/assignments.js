@@ -12,7 +12,7 @@ const {
     getAssignmentSubmissionsById,
     insertSubmissionToAssignmentById
 } = require('../models/assignments');
-const { addAssignmentToCourseById } = require('../models/courses');
+const { addAssignmentToCourseById, getCourseById } = require('../models/courses');
 const { ObjectId } = require('mongodb');
 const { rateLimit } = require('../lib/redis');
 const multer = require('multer')
@@ -23,10 +23,11 @@ const fs = require("node:fs")
  * Route to create a new assignment
  */
 router.post('/', requireAuthentication, rateLimit, async (req, res, next) => {
-    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+  const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
 
   if (validateAgainstSchema(req.body, assignmentSchema)) {
-    if (authorized) {
+    const instructorId = (await getCourseById(req?.body?.courseId))?.instructorId;
+    if (authorized && instructorId == req?.user?.id) {
       try {
         const assignmentId = await insertNewAssignment(req.body);
         console.log("Assignment added id: ", assignmentId);
@@ -43,7 +44,7 @@ router.post('/', requireAuthentication, rateLimit, async (req, res, next) => {
         next(err);
       }
     } else {
-      res.status(401).send({
+      res.status(403).send({
         error: "invalid authorization to create assignment",
       });
     }
@@ -93,11 +94,19 @@ router.get('/', async (req, res, next) => {
  * Route to update data about a specific assignment
  */
 router.patch('/:id', requireAuthentication, async (req, res, next) => {
-    const id = req.params.id
-    const assignment = req.body
-    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
-
-  if (authorized) {
+  const id = req.params.id
+  const assignment = req.body
+  const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+  let courseId = null
+  let instructorId = null
+  try{
+    courseId = (await getAssignmentById(id))?.courseId
+    instructorId = (await getCourseById(courseId))?.instructorId;
+  }catch(err){
+    next(err)
+  }
+  
+  if (authorized && instructorId && instructorId == req?.user?.id) {
     try {
       const updated = await editAssignmentById(id, assignment);
 
@@ -200,12 +209,12 @@ const upload = multer({
  */
 router.post("/:id/submissions", upload.single("file"), requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id;
-    if (req.file && req.body && req.body.assignmentId && req.body.studentId) {
+    if (req.file && req.body && req.body.studentId) {
       const submission = {
         contentType: req.file.mimetype,
         filename: req.file.filename,
         path: req.file.path,
-        assignmentId: req.body.assignmentId,
+        assignmentId: id,
         studentId: req.body.studentId,
         timestamp: new Date().toISOString(),
         grade: undefined,
