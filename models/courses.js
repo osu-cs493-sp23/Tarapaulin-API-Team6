@@ -194,10 +194,10 @@ async function getStudentsByCourseId(id) {
         return null
     } else {
         // Get list of student ids for the course
-        const studentIds = (await coursesCollection.aggregate([
+        const studentIds = ((await coursesCollection.aggregate([
             { $match: { _id: new ObjectId(id) } },
             { $project: { students: 1 } }
-        ]).toArray())[0].students
+        ]).toArray())[0]).students
         // Get student details 1-by-1
         if(!studentIds){
             return {students: []}
@@ -215,3 +215,21 @@ async function getStudentsByCourseId(id) {
     }
 }
 exports.getStudentsByCourseId = getStudentsByCourseId
+
+function convertToCSV(data) {
+    const students = data.students;
+  
+    if (!Array.isArray(students)) {
+      throw new Error('Students data is not an array');
+    }
+  
+    if (students.length === 0) {
+      throw new Error('Students data is empty');
+    }
+  
+    const columns = ['_id', 'name', 'email'];
+    const header = columns.join(',');
+    const rows = students.map(student => columns.map(column => String(student[column])).join(','));
+    return header + '\n' + rows.join('\n');
+  }
+  exports.convertToCSV = convertToCSV
