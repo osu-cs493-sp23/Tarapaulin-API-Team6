@@ -122,18 +122,25 @@ exports.removeAssignmentById = removeAssignmentById
 
 /* 
  * Returns a list of submissions if an assignment Id is valid otherwise returns null
+ * Provide the assignment id and an optional studentId to get submissions only from that student
  */
-async function getAssignmentSubmissionsById(id){
+async function getAssignmentSubmissionsById(id, pageNum, studentId = null){
     const db = getDbReference()
-    const collection = db.collection('assignments')
-
+    const asgnCollection = db.collection('assignments')
+    const subsCollection = db.collection('submissions')
+    // TODO: FINISH WHEN SUBMISSIONS DONE
+    
     let subs = null
     if (ObjectId.isValid(id)){
-        subs = await collection.aggregate([
+        const pageSize = 1
+        subs = await asgnCollection.aggregate([
             { $match: { _id: new ObjectId(id) } },
+            { $facet: {
+                metadata: [ { $count: "total" }, { $addFields: { page: parseInt(pageNum) } } ],
+                data: [ { $skip: 20 }, { $limit: pageSize } ]
+            }},
             { $project: { submissions: 1 } }
         ]).toArray()
-        return subs[0]
     }
 
     return subs
