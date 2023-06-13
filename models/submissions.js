@@ -1,5 +1,5 @@
 const { extractValidFields } = require('../lib/validation')
-const { ObjectId } = require("mongodb")
+const { ObjectId, GridFSBucket } = require("mongodb");
 const { getDbReference } = require('../lib/mongo')
 
 const submissionSchema = {
@@ -12,6 +12,12 @@ const submissionSchema = {
 
  exports.submissionSchema = submissionSchema
 
+
+ exports.getSubmissionDownloadStreamById = function (id) {
+    const db = getDbReference();
+    const bucket = new GridFSBucket(db, { bucketName: "submissions" });
+    return bucket.openDownloadStream(new ObjectId(id));
+};
 
 /*
  * Executes a DB query to bulk insert an array of new submissions into the database.
