@@ -111,12 +111,19 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
 /* 
  * Route to delete a course by Id
  */
-router.delete('/:id', async (req, res, next) => {
-    const result = await removeCourseById(req.params.id)
-    if(result) {
-        res.status(204).send()
+router.delete('/:id', requireAuthentication, async (req, res, next) => {
+    const instructorId = (await getCourseById(req.params.id)).instructorId
+    if(instructorId == req.user.id || req.user.role == "admin"){
+        const result = await removeCourseById(req.params.id)
+        if(result) {
+            res.status(204).send()
+        } else {
+            next();
+        }
     } else {
-        next();
+        res.status(403).send({
+            error: "User does not have permission to preform this action."
+        })
     }
 })
 
