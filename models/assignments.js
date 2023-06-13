@@ -117,6 +117,11 @@ async function getAssignmentSubmissionsById(id){
 }
 exports.getAssignmentSubmissionsById = getAssignmentSubmissionsById
 
+/* 
+ * Appends a new submission to an existing assignment
+ * if it fails to find a matching assignment or the submission object is incorrect it will return undefined
+ * Otherwise it will return the result of the update
+ */
 async function insertSubmissionToAssignmentById(id, submission){
     const submissionValues = extractValidFields(submission, submissionSchema)
 
@@ -124,16 +129,15 @@ async function insertSubmissionToAssignmentById(id, submission){
     const collection = db.collection('assignments')
     
     let result = null
-    if (ObjectId.isValid(id)){
+    if (ObjectId.isValid(id) && submissionValues && Object.keys(submissionValues).length > 0){
         result = await collection.updateOne(
             { _id: new ObjectId(id) },
-            { $push: submission}
+            { $push: submissionValues}
         )
     }
 
     return result?.matchedCount > 0 ? result : undefined;
 }
 exports.insertSubmissionToAssignmentById = insertSubmissionToAssignmentById
-
 
 
