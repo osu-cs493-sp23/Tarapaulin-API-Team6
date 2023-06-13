@@ -12,7 +12,12 @@ const {
     getAssignmentSubmissionsById,
     insertSubmissionToAssignmentById
 } = require('../models/assignments');
-const { addAssignmentToCourseById } = require('../models/courses');
+const { addAssignmentsToCourseById, 
+        getCourseById, 
+        removeAssignmentsFromCourseById,
+        getStudentsInCourseById 
+} = require('../models/courses');
+
 const { ObjectId } = require('mongodb');
 const { rateLimit } = require('../lib/redis');
 const multer = require('multer')
@@ -23,17 +28,30 @@ const fs = require("node:fs")
  * Route to create a new assignment
  */
 router.post('/', requireAuthentication, rateLimit, async (req, res, next) => {
-    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
-
   if (validateAgainstSchema(req.body, assignmentSchema)) {
-    if (authorized) {
+    const courseId = req?.body?.courseId
+    const instructorId = (await getCourseById(courseId))?.instructorId;
+    const authorized = req?.user && req?.user?.role && req?.user?.role == 'instructor' &&instructorId && instructorId == req?.user?.id
+    const isAdmin = req?.user?.role == 'admin'
+    
+    if (authorized || isAdmin) {
       try {
-        const assignmentId = await insertNewAssignment(req.body);
-        console.log("Assignment added id: ", assignmentId);
+        let assignmentId = await insertNewAssignment(req.body);
+
         if (assignmentId) {
-          res.status(201).send({
-            id: assignmentId,
-          });
+          const added = await addAssignmentsToCourseById(new ObjectId(courseId), [assignmentId])
+
+          if (added){
+            console.log("Assignment added id: ", assignmentId);
+            res.status(201).send({
+              id: assignmentId,
+            });
+          }else{
+            res.status(400).send({
+              error: "unable to add assignment to course",
+            });
+          }
+          
         } else {
           res.status(400).send({
             error: "unable to add assignment",
@@ -43,7 +61,7 @@ router.post('/', requireAuthentication, rateLimit, async (req, res, next) => {
         next(err);
       }
     } else {
-      res.status(401).send({
+      res.status(403).send({
         error: "invalid authorization to create assignment",
       });
     }
@@ -93,11 +111,23 @@ router.get('/', async (req, res, next) => {
  * Route to update data about a specific assignment
  */
 router.patch('/:id', requireAuthentication, async (req, res, next) => {
-    const id = req.params.id
-    const assignment = req.body
-    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+  const id = req.params.id
+  const assignment = req.body
+  
+  let courseId = null
+  let instructorId = null
+  try{
+    courseId = (await getAssignmentById(id))?.courseId
+    instructorId = (await getCourseById(courseId))?.instructorId;
+  }catch(err){
+    next(err)
+  }
 
-  if (authorized) {
+  const authorized = req?.user && req?.user?.role && req?.user?.role == 'instructor' 
+                     && instructorId && instructorId == req?.user?.id;
+
+  const isAdmin = req?.user?.role == 'admin'
+  if (authorized || isAdmin) {
     try {
       const updated = await editAssignmentById(id, assignment);
 
@@ -120,17 +150,33 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
  * Route to delete a specific assignment
  */
 router.delete('/:id', requireAuthentication, async (req, res, next) => {
-    const id = req.params.id
-    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+  const id = req.params.id
+  let courseId = null
+  let instructorId = null
+  try{
+    courseId = (await getAssignmentById(id))?.courseId
+    instructorId = (await getCourseById(courseId))?.instructorId;
+  }catch(err){
+    next(err)
+  }
 
-  if (authorized) {
+  const authorized = req?.user && req?.user?.role && instructorId && (req?.user?.role == 'instructor' && instructorId == req?.user?.id) 
+  const isAdmin =  req?.user?.role == 'admin'
+  if (authorized || isAdmin) {
     try {
-      const result = await removeAssignmentById(id);
-      if (result) {
-        res.status(204).send();
-      } else {
-        res.status(404).send({ error: "Delete assignment id not found" });
+      const assignments = [new ObjectId(id)]
+      let result = await removeAssignmentsFromCourseById(new ObjectId(courseId), assignments)
+      if (result){
+        result = await removeAssignmentById(id);
+        if (result) {
+          res.status(204).send();
+        } else {
+          res.status(404).send({ error: "Delete assignment id not found" });
+        }
+      }else{
+        res.status(404).send({ error: "Delete course id not found" });
       }
+      
     } catch (err) {
       next(err);
     }
@@ -145,31 +191,45 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
  * Route to get a list of all submissions for an assignment
  */
 router.get("/:id/submissions", requireAuthentication, rateLimit, async (req, res, next) => {
-    const id = req.params.id;
-    const page = parseInt(req.query.page) || 1;
-    const studentId = req.query.studentId || null;
-    const authorized =
-      req?.user &&
-      req?.user?.role &&
-      (req?.user?.role == "instructor" || req?.user?.role == "admin");
+  const id = req.params.id;
+  const page = parseInt(req.query.page) || 1;
+  const studentId = req.query.studentId || null;
 
-    if (authorized) {
-      try {
-        const submissions = await getAssignmentSubmissionsById(id, page, studentId);
-        if (submissions) {
-          res.send(submissions);
-        } else {
-          console.log("no subs");
-          next();
-        }
-      } catch (err) {
-        next(err);
-      }
-    } else{
-        res.status(403).send({ error: "Unauthorized request made to get assignment submissions" })
-    }
+  let courseId = null
+  let instructorId = null
+  try{
+    courseId = (await getAssignmentById(id))?.courseId
+    instructorId = (await getCourseById(courseId))?.instructorId;
+  }catch(err){
+    next(err)
   }
-);
+
+
+  const authorized =
+    req?.user &&
+    req?.user?.role &&
+    req?.user?.role == "instructor" &&
+    instructorId &&
+    instructorId == req?.user?.id;
+
+
+  const isAdmin = req?.user?.role == "admin"
+  if (authorized || isAdmin) {
+    try {
+      const submissions = await getAssignmentSubmissionsById(id, page, studentId);
+      if (submissions) {
+        res.send(submissions);
+      } else {
+        console.log("no subs");
+        next();
+      }
+    } catch (err) {
+      next(err);
+    }
+  } else{
+      res.status(403).send({ error: "Unauthorized request made to get assignment submissions" })
+  }
+});
 
 const fileTypes = {
   "application/pdf": "pdf",
@@ -200,39 +260,86 @@ const upload = multer({
  */
 router.post("/:id/submissions", upload.single("file"), requireAuthentication, rateLimit, async (req, res, next) => {
     const id = req.params.id;
-    if (req.file && req.body && req.body.assignmentId && req.body.studentId) {
-      const submission = {
-        contentType: req.file.mimetype,
-        filename: req.file.filename,
-        path: req.file.path,
-        assignmentId: req.body.assignmentId,
-        studentId: req.body.studentId,
-        timestamp: new Date().toISOString(),
-        grade: undefined,
-      };
-      // Save submission info to the database and get the submission ID
-      //const id = await saveSubmissionFile(submission);
-      const submissionId = await insertSubmissionToAssignmentById(
-        id,
-        submission
-      );
-      // Perform further processing or send the submission ID to a queue
-      // if necessary
-      // ...
-      console.log(submissionId);
-      fs.unlink(req.file.path, (err) => {
-        if (err) {
-          console.error("Error deleting file:", err);
-        } else {
-          console.log("File deleted:", req.file.path);
+    let students = null
+    let studentInCourse = false
+    let assignmentExists = false
+    console.log("ID: ", new ObjectId(id))
+   
+    if (req.file && req.body && req.body.studentId) {
+      const isStudent = req?.user?.id && req?.user?.id == req?.body?.studentId && req?.user?.role == 'student'
+      console.log("USER: ", req?.user)
+      console.log("RID: ", req?.user?.id)
+      console.log("SID: ", req?.body?.studentId)
+      console.log("EQ?: ", req?.user?.id == req?.body?.studentId)
+      if (isStudent){
+        try{
+        
+          const assignment = await getAssignmentById(id)
+          if (assignment){
+            // Determine course Id through assignment Id
+            // Then validate that the user (student) is enrolled in that course
+            assignmentExists = true
+            students = (await getStudentsInCourseById(assignment?.courseId))?.students
+            for (let i=0; i < students.length; ++i){
+              if (students[i] == req.body.studentId){
+                studentInCourse = true
+                break;
+              }
+            }
+            
+            // If student is in course let them submit
+            if (studentInCourse){
+              const submission = {
+                contentType: req.file.mimetype,
+                filename: req.file.filename,
+                path: req.file.path,
+                assignmentId: id,
+                studentId: req.body.studentId,
+                timestamp: new Date().toISOString(),
+                grade: undefined,
+              };
+        
+              // Save submission info to the database and get the submission ID
+              //const id = await saveSubmissionFile(submission);
+              const submissionId = await insertSubmissionToAssignmentById(
+                id,
+                submission
+              );
+        
+              // Perform further processing or send the submission ID to a queue
+              // if necessary
+              // ...
+              console.log(submissionId);
+              fs.unlink(req.file.path, (err) => {
+                if (err) {
+                  console.error("Error deleting file:", err);
+                } else {
+                  console.log("File deleted:", req.file.path);
+                }
+              });
+        
+              // Delete file from uploads/
+              res.status(200).send({
+                id: submissionId,
+                url: `/media/submissions/${submissionId}`,
+              });
+            }else{
+              res.status(403).send({
+                error: "Request not made by an authenticated student"
+              });
+            }
+          }else{
+            next()
+          }
+        }catch(err){
+          next(err)
         }
-      });
-
-      // Delete file from uploads/
-      res.status(200).send({
-        id: submissionId,
-        url: `/media/submissions/${submissionId}`,
-      });
+      }else{
+        res.status(403).send({
+          error: "Request not made by an authenticated student or bearer token mismatch with req body studentId"
+        });
+      }
+      
     } else {
       res.status(400).send({
         err: "Invalid file or missing assignment/student information",
