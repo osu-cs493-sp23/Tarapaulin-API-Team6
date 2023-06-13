@@ -11,7 +11,9 @@ const {
     removeAssignmentById,
     getAssignmentSubmissionsById,
     insertSubmissionToAssignmentById
-} = require('../models/assignments')
+} = require('../models/assignments');
+const { addAssignmentToCourseById } = require('../models/courses');
+const { ObjectId } = require('mongodb');
 
 
 /* 
@@ -21,6 +23,7 @@ router.post('/', async (req, res, next) => {
     if (validateAgainstSchema(req.body, assignmentSchema)){
         try{
             const assignmentId = await insertNewAssignment(req.body)
+            await addAssignmentToCourseById(new ObjectId(req.body.courseId), assignmentId)
             console.log('Assignment added id: ', assignmentId)
             if (assignmentId){
                 res.status(201).send({
