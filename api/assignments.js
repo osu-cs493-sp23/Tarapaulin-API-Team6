@@ -90,8 +90,29 @@ router.get('/', async (req, res, next) => {
 /* 
  * Route to update data about a specific assignment
  */
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', requireAuthentication, async (req, res, next) => {
+    const id = req.params.id
+    const assignment = req.body
+    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
 
+    
+    if (authorized){
+        try{
+            const updated = await editAssignmentById(id, assignment)
+
+            if (updated){
+                    res.send("Updated Assignment")
+            }else{
+                    res.status(500).send("Failed to update assignment")
+            }   
+        }catch(err){
+            next(err)
+        }
+    }else{
+        res.status(401).send({
+            error: 'invalid authorization to create assignment'
+        })
+    }
 })
 
 /* 

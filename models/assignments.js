@@ -95,7 +95,7 @@ async function editAssignmentById(id, assignment){
 
     let result = undefined
     if (ObjectId.isValid(id)){
-        result = await collection.update({ _id: new ObjectId(id) }, assignmentValues)
+        result = await collection.updateOne({ _id: new ObjectId(id) }, { $set: assignmentValues})
     }
     
     return result?.matchedCount > 0 ? result : undefined;
