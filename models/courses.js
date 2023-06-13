@@ -163,6 +163,23 @@ async function getCourseById(id) {
 }
 exports.getCourseById = getCourseById
 
+async function getStudentsInCourseById(id) {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+
+    if (!ObjectId.isValid(id)) {
+        return null
+    } else {
+        const results = await collection.aggregate([
+            { $match: { _id: new ObjectId(id) } },
+            { $project: { students: 1} }
+        ]).toArray()
+
+        return results[0]
+    }
+}
+exports.getStudentsInCourseById = getStudentsInCourseById
+
 async function editCourseById(id, update) {
     const db = getDbReference()
     const collection = db.collection('courses')
