@@ -95,7 +95,7 @@ async function editAssignmentById(id, assignment){
 
     let result = undefined
     if (ObjectId.isValid(id)){
-        result = await collection.update({ _id: new ObjectId(id) }, assignmentValues)
+        result = await collection.updateOne({ _id: new ObjectId(id) }, { $set: assignmentValues})
     }
     
     return result?.matchedCount > 0 ? result : undefined;
@@ -113,7 +113,7 @@ async function removeAssignmentById(id){
     
     let result = null
     if (ObjectId.isValid(id)){
-        result = collection.remove({_id: new ObjectId(id)})
+        result = await collection.deleteOne({_id: new ObjectId(id)})
     }
 
     return result
@@ -122,18 +122,25 @@ exports.removeAssignmentById = removeAssignmentById
 
 /* 
  * Returns a list of submissions if an assignment Id is valid otherwise returns null
+ * Provide the assignment id and an optional studentId to get submissions only from that student
  */
-async function getAssignmentSubmissionsById(id){
+async function getAssignmentSubmissionsById(id, pageNum, studentId = null){
     const db = getDbReference()
-    const collection = db.collection('assignments')
-
+    const asgnCollection = db.collection('assignments')
+    const subsCollection = db.collection('submissions')
+    // TODO: FINISH WHEN SUBMISSIONS DONE
+    
     let subs = null
     if (ObjectId.isValid(id)){
-        subs = await collection.aggregate([
+        const pageSize = 1
+        subs = await asgnCollection.aggregate([
             { $match: { _id: new ObjectId(id) } },
+            { $facet: {
+                metadata: [ { $count: "total" }, { $addFields: { page: parseInt(pageNum) } } ],
+                data: [ { $skip: 20 }, { $limit: pageSize } ]
+            }},
             { $project: { submissions: 1 } }
         ]).toArray()
-        return subs[0]
     }
 
     return subs

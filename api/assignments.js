@@ -90,21 +90,77 @@ router.get('/', async (req, res, next) => {
 /* 
  * Route to update data about a specific assignment
  */
-router.patch('/:id', async (req, res, next) => {
+router.patch('/:id', requireAuthentication, async (req, res, next) => {
+    const id = req.params.id
+    const assignment = req.body
+    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
 
+    
+    if (authorized){
+        try{
+            const updated = await editAssignmentById(id, assignment)
+
+            if (updated){
+                    res.send()
+            }else{
+                    res.status(404).send({error: "Failed to update assignment"})
+            }   
+        }catch(err){
+            next(err)
+        }
+    }else{
+        res.status(403).send({
+            error: 'invalid authorization to create assignment'
+        })
+    }
 })
 
 /* 
  * Route to delete a specific assignment
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAuthentication, async (req, res, next) => {
+    const id = req.params.id
+    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+
+    if (authorized){
+        try{
+            const result = await removeAssignmentById(id)
+            if (result){
+                res.status(204).send()
+            }else{
+                res.status(404).send({ error: "Delete assignment id not found" })
+            }
+        }catch(err){
+            next(err)
+        }
+    }else{
+        res.status(403).send({ error: "Unauthorized request made to delete assignment" })
+    }
 })
 
 /* 
  * Route to get a list of all submissions for an assignment
  */
-router.get('/:id/submissions', async (req, res, next) => {
-
+router.get('/:id/submissions', requireAuthentication, async (req, res, next) => {
+    const id = req.params.id
+    const page = parseInt(req.query.page) || 1
+    const studentId = req.query.studentId || null
+    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+    // TODO: finnish when submissions gridfs done!!
+    if (authorized){
+        try{
+            const subs = await getAssignmentSubmissionsById(id, page, studentId)
+            if (subs){
+                res.status(200).send({ submissions: subs})
+            }else{
+                res.status(404).send({ error: "Specific assignment id not found" })
+            }
+        }catch(err){
+            next(err)
+        }
+    }else{
+        res.status(403).send({ error: "Unauthorized request made to get assignment submissions" })
+    }
 })
 
 /* 
