@@ -20,6 +20,7 @@ const {
   removeStudentsFromCourseById,
   convertToCSV,
 } = require("../models/courses");
+const { rateLimit } = require("../lib/redis");
 
 /*
  * Route to get all courses (Paginated)
@@ -138,7 +139,7 @@ router.patch("/:id", requireAuthentication, async (req, res, next) => {
 /*
  * Route to delete a course by Id
  */
-router.delete("/:id", requireAuthentication, async (req, res, next) => {
+router.delete("/:id", requireAuthentication, rateLimit, async (req, res, next) => {
   const reqCourse = await getCourseById(req.params.id);
   if (!reqCourse) {
     next();
@@ -163,7 +164,7 @@ router.delete("/:id", requireAuthentication, async (req, res, next) => {
 /*
  * Route to update students in a course
  */
-router.post("/:id/students", requireAuthentication, async (req, res, next) => {
+router.post("/:id/students", requireAuthentication, rateLimit, async (req, res, next) => {
   const reqCourse = await getCourseById(req.params.id);
   if (!reqCourse) {
     next();
@@ -211,7 +212,7 @@ router.post("/:id/students", requireAuthentication, async (req, res, next) => {
 /*
  * Route to get students in a course
  */
-router.get("/:id/students", requireAuthentication, async (req, res, next) => {
+router.get("/:id/students", requireAuthentication, rateLimit, async (req, res, next) => {
   const reqCourse = await getCourseById(req.params.id);
   if (!reqCourse) {
     next();
@@ -239,7 +240,7 @@ router.get("/:id/students", requireAuthentication, async (req, res, next) => {
 /*
  * Route to get a csv file containing list of the students enrolled in the course
  */
-router.get("/:id/roster", requireAuthentication, async (req, res, next) => {
+router.get("/:id/roster", requireAuthentication, rateLimit, async (req, res, next) => {
   const instructorId = (await getCourseById(req.params.id)).instructorId;
   if (instructorId === req.user.id || req.user.role === "admin") {
     try {
