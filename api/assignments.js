@@ -1,7 +1,7 @@
 const router = require('express').Router();
 
 const { validateAgainstSchema, detectUnknownFieldsAgainstSchema } = require('../lib/validation')
-const { isAdminLoggedIn, requireAuthentication } = require('../lib/auth')
+const { requireAuthentication } = require('../lib/auth')
 const {  
     assignmentSchema,
     getAssignmentById,
@@ -20,23 +20,30 @@ const { ObjectId } = require('mongodb');
  * Route to create a new assignment
  */
 router.post('/', async (req, res, next) => {
-    if (validateAgainstSchema(req.body, assignmentSchema)){
-        try{
-            const assignmentId = await insertNewAssignment(req.body)
-            await addAssignmentToCourseById(new ObjectId(req.body.courseId), assignmentId)
-            console.log('Assignment added id: ', assignmentId)
-            if (assignmentId){
-                res.status(201).send({
-                    id: assignmentId
-                })
-            }else{
-                res.status(400).send({
-                    error: 'unable to add assignment'
-                })
-            }
+    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
 
-        }catch(err){
-            next(err)
+    if (validateAgainstSchema(req.body, assignmentSchema)){
+        if (authorized){
+            try{
+                const assignmentId = await insertNewAssignment(req.body)
+                console.log('Assignment added id: ', assignmentId)
+                if (assignmentId){
+                    res.status(201).send({
+                        id: assignmentId
+                    })
+                }else{
+                    res.status(400).send({
+                        error: 'unable to add assignment'
+                    })
+                }
+    
+            }catch(err){
+                next(err)
+            }
+        }else{
+            res.status(401).send({
+                error: 'invalid authorization to create assignment'
+            })
         }
     }else{
         res.status(400).send({
@@ -91,7 +98,6 @@ router.patch('/:id', async (req, res, next) => {
  * Route to delete a specific assignment
  */
 router.delete('/:id', async (req, res, next) => {
-
 })
 
 /* 
