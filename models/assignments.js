@@ -53,7 +53,7 @@ exports.insertNewAssignment = insertNewAssignment
  * Returns a Promise that resolves to a map of the IDs of the newly-created
  * assignment entries.
  */
-async function bulkInsertNewAssignment(assignments){
+async function bulkInsertNewAssignments(assignments){
     const assignmentsToInsert = assignments.map(function (assignment) {
         return extractValidFields(assignment, assignmentSchema)
     })
@@ -63,7 +63,7 @@ async function bulkInsertNewAssignment(assignments){
     const result = await collection.insertMany(assignmentsToInsert)
     return result.insertedIds
 }
-exports.bulkInsertNewAssignment = bulkInsertNewAssignment
+exports.bulkInsertNewAssignments = bulkInsertNewAssignments
 
 async function updateAssignmentById(id){
     // TODO...
