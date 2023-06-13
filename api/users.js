@@ -9,7 +9,8 @@ const { getDbReference } = require('../lib/mongo')
 const { userSchema,
         insertNewUser,
         getUsers,
-        getUserById } = require('../models/users')
+        getUserById } = require('../models/users');
+const { rateLimit } = require('../lib/redis');
 
 
 
@@ -112,7 +113,7 @@ router.get('/:id', requireAuthentication, async (req, res, next) => {
 /*
  * debug route for getting all users and displaying Ids
  */
-router.get('/', async (req, res, next) => {
+router.get('/', rateLimit, async (req, res, next) => {
     try {
         const users = await getUsers()
         res.status(200).send(users)
