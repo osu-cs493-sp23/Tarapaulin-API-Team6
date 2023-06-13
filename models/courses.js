@@ -8,9 +8,9 @@ const CourseSchema = {
     number: { required: true },
     title: { required: true },
     term: { required: true },
-    instructorId: { required: true },
-    students: { required: false },
-    assignments: {required: false }
+    instructorId: { required: true }
+    // students: { required: false },
+    // assignments: {required: false }
 }
 exports.CourseSchema = CourseSchema
 
@@ -23,6 +23,18 @@ async function insertNewCourse(course) {
     return result.insertedId
 }
 exports.insertNewCourse = insertNewCourse
+
+async function bulkInsertNewCourses(courses){
+    const coursesToInsert = courses.map(function (course) {
+        return extractValidFields(course, CourseSchema)
+    })
+
+    const db = getDbReference()
+    const collection = db.collection('courses')
+    const result = await collection.insertMany(coursesToInsert)
+    return result.insertedIds
+}
+exports.bulkInsertNewCourses = bulkInsertNewCourses
 
 async function getCoursesPage(page) {
     const db = getDbReference()
@@ -46,7 +58,6 @@ async function getCoursesPage(page) {
         .skip(offset)
         .limit(pageSize)
         .toArray()
-    console.log(results)
 
     return {
         courses: results,
@@ -70,11 +81,74 @@ async function getCourseById(id) {
             { $project: { students: 0, assignments: 0 } }
         ]).toArray()
 
-        return { courses: results[0] }
+        return results[0]
     }
 }
 exports.getCourseById = getCourseById
 
+async function editCourseById(id, update) {
+    const db = getDbReference()
+    const collection = db.collection('courses')
 
+    if (!ObjectId.isValid(id)) {
+        return null
+    } else {
+        const results = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: update }
+        )
+        if(results.matchedCount == 0){
+            return undefined
+        }
+
+        return results
+    }
+}
+exports.editCourseById = editCourseById
+
+async function removeCourseById(id) {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+    
+    if (ObjectId.isValid(id)){
+        const result = await collection.deleteOne({
+            _id: new ObjectId(id)
+        })
+        return (result.deletedCount > 0)
+    }
+
+    return undefined
+    
+}
+exports.removeCourseById = removeCourseById
+
+async function getStudentsByCourseId(id) {
+    const db = getDbReference()
+    const coursesCollection = db.collection('courses')
+    const usersCollection = db.collection('users')
+
+    if (!ObjectId.isValid(id)) {
+        return null
+    } else {
+        // Get list of student ids for the course
+        const studentIds = await coursesCollection.aggregate([
+            { $match: { _id: new ObjectId(id) } },
+            { $project: { students: 1 } }
+        ]).toArray()
+
+        // Get student details 1-by-1
+        results = []
+        for( const student of studentIds ){
+            results.push(
+                (await usersCollection.aggregate([
+                    { $match: {_id: new ObjectId(student) } }
+                ])
+                .toArray())[0]
+            )
+        }
+        return { students: results }
+    }
+}
+exports.getStudentsByCourseId = getStudentsByCourseId
 
 // Patch can use findAndModify

@@ -8,6 +8,7 @@ const userSchema = {
     password: { required: true },
     role: {  required: true }
 }
+exports.userSchema = userSchema
 
 const userFields = [
     'name',
@@ -16,8 +17,18 @@ const userFields = [
     'role',
     'courses'
 ]
+exports.userFields = userFields
 
-module.exports = { userSchema, userFields }
+async function getUsers() {
+    const db = getDbReference()
+    const collection = db.collection('users')
+
+    const results = await collection.find( {} )
+        .toArray()
+    return results
+}
+exports.getUsers = getUsers
+
 
 /* 
  * Returns null if userId or user document is not found otherwise returns the user
@@ -41,7 +52,7 @@ async function insertNewUser(user){
     user = extractValidFields(user, userSchema)
     const db = getDbReference()
     const collection = db.collection('users')
-    const result = collection.insertOne(user)
+    const result = await collection.insertOne(user)
     return result.insertedId
 }
 exports.insertNewUser = insertNewUser
@@ -51,11 +62,13 @@ exports.insertNewUser = insertNewUser
  * Returns a Promise that resolves to a map of the IDs of the newly-created
  * user entries.
  */
+const bcrypt = require('bcryptjs')
 async function bulkInsertNewUser(users){
     const usersToInsert = users.map(function (user) {
-        return extractValidFields(user, userSchema)
+        fields = extractValidFields(user, userSchema)
+        fields.password = bcrypt.hashSync(fields.password, 8)
+        return fields
     })
-
     const db = getDbReference()
     const collection = db.collection('users')
     const result = await collection.insertMany(usersToInsert)
