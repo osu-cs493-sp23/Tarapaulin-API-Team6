@@ -126,7 +126,6 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
                      && instructorId && instructorId == req?.user?.id;
 
   const isAdmin = req?.user?.role == 'admin'
-  // TODO: fix auth
   if (authorized || isAdmin) {
     try {
       const updated = await editAssignmentById(id, assignment);
