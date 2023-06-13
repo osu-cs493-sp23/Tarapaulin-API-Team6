@@ -240,5 +240,4 @@ router.post("/:id/submissions", upload.single("file"), requireAuthentication, ra
     }
   }
 );
-
 module.exports = router
