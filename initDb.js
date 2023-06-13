@@ -7,24 +7,25 @@ require("dotenv").config()
 
 
 const { courseFields, bulkInsertNewCourses } = require('./models/courses')
-const { submissionFields } = require('./models/submissions')
+const { bulkInsertNewSubmissions } = require('./models/submissions')
 const { userFields, bulkInsertNewUser } = require('./models/users')
-const { assignmentFields, bulkInsertNewAssignment } = require('./models/assignments.js')
+const { assignmentFields, bulkInsertNewAssignments } = require('./models/assignments.js')
 
 const courseData = require('./data/courses.json')
 const assignmentData = require('./data/assignments.json')
 const submissionData = require('./data/submissions.json')
 const userData = require('./data/users.json')
-const { connectToDb } = require("./lib/mongo")
+const { connectToDb, closeDbConnection } = require("./lib/mongo")
 
 connectToDb( async function () {
     users = await bulkInsertNewUser(userData)
     courses = await bulkInsertNewCourses(courseData)
-    assignments = await bulkInsertNewAssignment(assignmentData)
+    assignments = await bulkInsertNewAssignments(assignmentData)
+    submissions = await bulkInsertNewSubmissions(submissionData)
     // await Course.bulkCreate(courseData, { fields: courseFields })
     // await Assignment.bulkCreate(assignmentData, { fields: assignmentFields })
     // await Submission.bulkCreate(submissionData, { fields: submissionFields })
-    console.log(users)
+    console.log(submissions)
 
     closeDbConnection(function () {
         console.log("== Init DB connection closed")
