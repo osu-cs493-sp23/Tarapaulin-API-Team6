@@ -1,7 +1,7 @@
 const router = require("express").Router();
 
 const { validateAgainstSchema, detectUnknownFieldsAgainstSchema } = require('../lib/validation')
-const { requireAuthentication } = require('../lib/auth')
+const { requireAuthentication, nonBlockingAuthentication } = require('../lib/auth')
 const {  
     assignmentSchema,
     getAssignmentById,
@@ -14,7 +14,10 @@ const {
 } = require('../models/assignments');
 const { addAssignmentToCourseById } = require('../models/courses');
 const { ObjectId } = require('mongodb');
-
+const { rateLimit } = require('../lib/redis');
+const multer = require('multer')
+const crypto = require("node:crypto")
+const fs = require("node:fs")
 
 /*
  * Route to create a new assignment
@@ -243,3 +246,5 @@ router.post(
     }
   }
 );
+
+module.exports = router
