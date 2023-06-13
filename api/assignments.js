@@ -141,22 +141,26 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
 /*
  * Route to get a list of all submissions for an assignment
  */
-router.get('/:id/submissions', requireAuthentication, async (req, res, next) => {
-    const id = req.params.id
-    const page = parseInt(req.query.page) || 1
-    const studentId = req.query.studentId || null
-    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
-    // TODO: finnish when submissions gridfs done!!
-    if (authorized){
-        try{
-            const subs = await getAssignmentSubmissionsById(id, page, studentId)
-            if (subs){
-                res.status(200).send({ submissions: subs})
-            }else{
-                res.status(404).send({ error: "Specific assignment id not found" })
-            }
-        }catch(err){
-            next(err)
+router.get(
+  "/:id/submissions",
+  requireAuthentication,
+  async (req, res, next) => {
+    const id = req.params.id;
+    const page = parseInt(req.query.page) || 1;
+    const studentId = req.query.studentId || null;
+    const authorized =
+      req?.user &&
+      req?.user?.role &&
+      (req?.user?.role == "instructor" || req?.user?.role == "admin");
+    if (authorized) {
+      try {
+        const objectId = new ObjectId(id); // Convert id to ObjectId
+        const submissions = await getAssignmentSubmissionsById(objectId, page, studentId);
+        if (submissions) {
+          res.send(submissions);
+        } else {
+          console.log("no subs");
+          next();
         }
       } catch (err) {
         next(err);
@@ -194,6 +198,48 @@ const upload = multer({
 /*
  * Route to create a new submission for an assignment
  */
-router.post('/:id/submissions', async (req, res, next) => {
+router.post(
+  "/:id/submissions",
+  upload.single("file"),
+  async (req, res, next) => {
+    const id = req.params.id;
+    if (req.file && req.body && req.body.assignmentId && req.body.studentId) {
+      const submission = {
+        contentType: req.file.mimetype,
+        filename: req.file.filename,
+        path: req.file.path,
+        assignmentId: req.body.assignmentId,
+        studentId: req.body.studentId,
+        timestamp: new Date().toISOString(),
+        grade: undefined,
+      };
+      // Save submission info to the database and get the submission ID
+      //const id = await saveSubmissionFile(submission);
+      const submissionId = await insertSubmissionToAssignmentById(
+        id,
+        submission
+      );
+      // Perform further processing or send the submission ID to a queue
+      // if necessary
+      // ...
+      console.log(submissionId);
+      fs.unlink(req.file.path, (err) => {
+        if (err) {
+          console.error("Error deleting file:", err);
+        } else {
+          console.log("File deleted:", req.file.path);
+        }
+      });
 
-})
+      // Delete file from uploads/
+      res.status(200).send({
+        id: submissionId,
+        url: `/media/submissions/${submissionId}`,
+      });
+    } else {
+      res.status(400).send({
+        err: "Invalid file or missing assignment/student information",
+      });
+    }
+  }
+);
