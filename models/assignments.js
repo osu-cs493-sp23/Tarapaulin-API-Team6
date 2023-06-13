@@ -60,7 +60,7 @@ exports.insertNewAssignment = insertNewAssignment
  * assignment entries.
  */
 async function bulkInsertNewAssignments(assignments){
-    const { getCourses, addAssignmentToCourseById } = require('./courses')
+    const { getCourses, addAssignmentsToCourseById } = require('./courses')
     const courses = await getCourses()
     const assignmentsToInsert = assignments.map(function (assignment) {
         const fields = extractValidFields(assignment, assignmentSchema)
@@ -77,7 +77,7 @@ async function bulkInsertNewAssignments(assignments){
         assignment = assignmentsToInsert[i], assignmentId = ids[i];
         i++ ){
         
-        addAssignmentToCourseById(assignment.courseId, assignmentId)
+        addAssignmentsToCourseById(assignment.courseId, [assignmentId])
     }
 
     return result.insertedIds

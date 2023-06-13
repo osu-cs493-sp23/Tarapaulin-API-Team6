@@ -21,7 +21,7 @@ const submissionSchema = {
 async function bulkInsertNewSubmissions(submissions){
     const { getUsers } = require('./users')
     const { getAssignments } = require('./assignments')
-    const { addStudentToCourseById } = require('./courses')
+    const { addStudentsToCourseById } = require('./courses')
     const users = await getUsers()
     const assignments = await getAssignments()
 
@@ -48,7 +48,7 @@ async function bulkInsertNewSubmissions(submissions){
         courseId = (await assignmentCollection.findOne( {
             _id: assignmentId
         })).courseId
-        const result = await addStudentToCourseById(courseId, studentId)
+        const result = await addStudentsToCourseById(courseId, [studentId])
     }
     return result.insertedIds
 
