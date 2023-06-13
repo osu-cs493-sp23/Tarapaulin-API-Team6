@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const { ObjectId } = require('mongodb')
 
 const { validateAgainstSchema, detectUnknownFieldsAgainstSchema } = require('../lib/validation')
 const { isAdminLoggedIn, requireAuthentication } = require('../lib/auth')
@@ -11,7 +12,9 @@ const { CourseSchema,
         getStudentsByCourseId,
         editCourseById,
         removeCourseById,
-        getCourses} = require('../models/courses')
+        getCourses,
+        addStudentsToCourseById,
+        removeStudentsFromCourseById} = require('../models/courses')
 
 /* 
  * Route to get all courses (Paginated)
@@ -99,7 +102,9 @@ router.get('/:id', async (req, res, next) => {
 router.patch('/:id', requireAuthentication, async (req, res, next) => {
     if(detectUnknownFieldsAgainstSchema(req.body, CourseSchema)) {
         try {
-            const instructorId = (await getCourseById(req.params.id)).instructorId
+            const reqCourse = await getCourseById(req.params.id)
+            if(!reqCourse){ next(); return }
+            const instructorId = reqCourse.instructorId
             if(instructorId == req.user.id || req.user.role == "admin"){
                 const course = await editCourseById(req.params.id, req.body)
                 if (course) {
@@ -126,7 +131,10 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
  * Route to delete a course by Id
  */
 router.delete('/:id', requireAuthentication, async (req, res, next) => {
-    const instructorId = (await getCourseById(req.params.id)).instructorId
+    const reqCourse = await getCourseById(req.params.id)
+    if(!reqCourse){ next(); return }
+    const instructorId = reqCourse.instructorId
+
     if(instructorId == req.user.id || req.user.role == "admin"){
         const result = await removeCourseById(req.params.id)
         if(result) {
@@ -142,10 +150,52 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
 })
 
 /* 
+ * Route to update students in a course
+ */
+router.post('/:id/students', requireAuthentication, async (req, res, next) => {
+    const reqCourse = await getCourseById(req.params.id)
+    if(!reqCourse){ next(); return }
+    const instructorId = reqCourse.instructorId
+    addRemoveSchema = {
+        add: {required: true},
+        remove: {required: true}
+    }
+    if(instructorId == req.user.id || req.user.role == "admin"){
+        if (validateAgainstSchema(req.body, addRemoveSchema)) {
+            try {
+                additions = req.body.add
+                removals = req.body.remove
+                const result1 = await removeStudentsFromCourseById(new ObjectId(req.params.id), removals)
+                const result2 = await addStudentsToCourseById(new ObjectId(req.params.id), additions)
+                
+            
+                if (result1 && result2) {
+                    res.status(200).send()
+                } else {
+                    next()
+                }
+            } catch (err) {
+                next(err)
+            }
+        } else {
+            res.status(400).send({
+                error: "Request body is not a valid Course object."
+            })
+        }
+    } else {
+        res.status(403).send({
+            error: "User does not have permission to preform this action."
+        })
+    }
+})
+
+/* 
  * Route to get students in a course
  */
 router.get('/:id/students', requireAuthentication, async (req, res, next) => {
-    const instructorId = (await getCourseById(req.params.id)).instructorId 
+    const reqCourse = await getCourseById(req.params.id)
+    if(!reqCourse){ next(); return }
+    const instructorId = reqCourse.instructorId
     if(instructorId == req.user.id || req.user.role == "admin"){
         try {
             const course = await getStudentsByCourseId(req.params.id)
@@ -162,13 +212,6 @@ router.get('/:id/students', requireAuthentication, async (req, res, next) => {
             error: "User does not have permission to preform this action."
         })
     }
-})
-
-/* 
- * Route to update students in a course
- */
-router.post('/:id/students', async (req, res, next) => {
-
 })
 
 /* 

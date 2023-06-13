@@ -24,37 +24,51 @@ async function insertNewCourse(course) {
 }
 exports.insertNewCourse = insertNewCourse
 
-async function addAssignmentToCourseById(id, assignment) {
+async function addAssignmentsToCourseById(id, assignments) {
     const db = getDbReference()
     const collection = db.collection('courses')
 
     const results = await collection.updateOne(
         { _id: id },
-        { $push: { assignments: assignment }}
+        { $push: { assignments: { $each: assignments } }}
     )
     if(results.matchedCount == 0){
         return undefined
     }
     return results
 }
-exports.addAssignmentToCourseById = addAssignmentToCourseById
+exports.addAssignmentsToCourseById = addAssignmentsToCourseById
 
 
-async function addStudentToCourseById(id, student) {
+async function addStudentsToCourseById(id, students) {
     const db = getDbReference()
     const collection = db.collection('courses')
 
     const results = await collection.updateOne(
         { _id: id },
-        { $push: { students: student } }
+        { $push: { students: { $each: students } } }
     )
     if(results.matchedCount == 0){
         return undefined
     }
     return results
 }
-exports.addStudentToCourseById = addStudentToCourseById
+exports.addStudentsToCourseById = addStudentsToCourseById
 
+async function removeStudentsFromCourseById(id, students) {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+
+    const results = await collection.updateOne(
+        { _id: id },
+        { $pull: { students: { $in: students } } }
+    )
+    if(results.matchedCount == 0){
+        return undefined
+    }
+    return results
+}
+exports.removeStudentsFromCourseById = removeStudentsFromCourseById
 
 async function bulkInsertNewCourses(courses){
     const { getUsers } = require("./users")
@@ -180,11 +194,10 @@ async function getStudentsByCourseId(id) {
         return null
     } else {
         // Get list of student ids for the course
-        const studentIds = await coursesCollection.aggregate([
+        const studentIds = (await coursesCollection.aggregate([
             { $match: { _id: new ObjectId(id) } },
             { $project: { students: 1 } }
-        ]).toArray()
-
+        ]).toArray())[0].students
         // Get student details 1-by-1
         results = []
         for( const student of studentIds ){
