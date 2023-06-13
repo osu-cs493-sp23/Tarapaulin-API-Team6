@@ -7,7 +7,8 @@ const { getDbReference } = require('../lib/mongo')
 
 const { userSchema,
         insertNewUser,
-        getUsers } = require('../models/users')
+        getUsers,
+        getUserById } = require('../models/users')
 
 
 
@@ -70,7 +71,18 @@ router.post('/login', async (req, res, next) => {
  * Route to get data about a specific user
  */
 router.get('/:id', async (req, res, next) => {
-
+    const id = req.params.id
+    try{
+        const user = await getUserById(id)
+        console.log(user)
+        if (user){
+            res.status(200).send(user) 
+        }else{
+            next()
+        }
+    }catch(err){
+        next(err)
+    }
 })
 
 /*
