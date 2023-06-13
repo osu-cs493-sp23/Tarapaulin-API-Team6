@@ -200,7 +200,8 @@ async function insertSubmissionToAssignmentById(id, submission) {
       { $push: { submissions: uploadStream.id } }
     );
     submissionId = uploadStream.id;
+    return submissionId
   }
-  return result?.matchedCount > 0 ? submissionId : undefined;
+  return undefined;
 }
 exports.insertSubmissionToAssignmentById = insertSubmissionToAssignmentById;
