@@ -7,6 +7,7 @@ const { getDbReference } = require('../lib/mongo')
 
 const { userSchema,
         insertNewUser,
+        getUsers,
         getUserById } = require('../models/users')
 
 
