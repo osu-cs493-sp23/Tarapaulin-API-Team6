@@ -6,4 +6,4 @@ ENV PORT=8000
 EXPOSE ${PORT}
 # Multi command to init db then start the server
 # Might want to change this
-CMD echo STARTING DB INIT; npm run initdb; npm start
+CMD npm start
