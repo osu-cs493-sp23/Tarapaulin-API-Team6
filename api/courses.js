@@ -242,9 +242,8 @@ router.get("/:id/students", requireAuthentication, rateLimit, async (req, res, n
  * Route to get a csv file containing list of the students enrolled in the course
  */
 router.get("/:id/roster", requireAuthentication, rateLimit, async (req, res, next) => {
-  const instructorId = (await getCourseById(req.params.id)).instructorId;
-//   NOTE: instructorId not working properly???
-  if (instructorId === req.user.id || req.user.role === "admin" || req.user.role === 'instructor') {
+  const instructorId = (await getCourseById(req.params.id))?.instructorId;
+  if (instructorId == req.user.id || req.user.role === "admin") {
     try {
       const students = await getStudentsByCourseId(req.params.id);
 

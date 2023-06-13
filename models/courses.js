@@ -70,6 +70,21 @@ async function removeStudentsFromCourseById(id, students) {
 }
 exports.removeStudentsFromCourseById = removeStudentsFromCourseById
 
+async function removeAssignmentsFromCourseById(id, assignments) {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+
+    const results = await collection.updateOne(
+        { _id: id },
+        { $pull: { assignments: { $in: assignments } } }
+    )
+    if(results.matchedCount == 0){
+        return undefined
+    }
+    return results
+}
+exports.removeAssignmentsFromCourseById = removeAssignmentsFromCourseById
+
 async function bulkInsertNewCourses(courses){
     const { getUsers } = require("./users")
     const users = await getUsers()
@@ -147,6 +162,23 @@ async function getCourseById(id) {
     }
 }
 exports.getCourseById = getCourseById
+
+async function getStudentsInCourseById(id) {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+
+    if (!ObjectId.isValid(id)) {
+        return null
+    } else {
+        const results = await collection.aggregate([
+            { $match: { _id: new ObjectId(id) } },
+            { $project: { students: 1} }
+        ]).toArray()
+
+        return results[0]
+    }
+}
+exports.getStudentsInCourseById = getStudentsInCourseById
 
 async function editCourseById(id, update) {
     const db = getDbReference()
