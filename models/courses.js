@@ -212,5 +212,3 @@ async function getStudentsByCourseId(id) {
     }
 }
 exports.getStudentsByCourseId = getStudentsByCourseId
-
-// Patch can use findAndModify
