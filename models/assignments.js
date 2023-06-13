@@ -9,16 +9,7 @@ const assignmentSchema = {
     due: { required: true },
     submissions: { required: true}
 }
-
-const assignmentFields = [
-    'courseId',
-    'title',
-    'points',
-    'due',
-    'submissions'
-]
-
-module.exports = { assignmentSchema, assignmentFields }
+exports.assignmentSchema = assignmentSchema 
 
 /* 
  * Returns null if id or assignment document is not found otherwise returns the assignment (without submission data)

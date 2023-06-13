@@ -5,10 +5,11 @@
 // Use env varaible calues
 require("dotenv").config()
 
-const { bulkInsertNewCourses } = require('./models/courses')
-const { bulk } = require('./models/submissions')
+
+const { courseFields, bulkInsertNewCourses } = require('./models/courses')
+const { submissionFields } = require('./models/submissions')
 const { userFields, bulkInsertNewUser } = require('./models/users')
-const { bulkInsertNewAssignments } = require('./models/assignments')
+const { assignmentFields, bulkInsertNewAssignment } = require('./models/assignments.js')
 
 const courseData = require('./data/courses.json')
 const assignmentData = require('./data/assignments.json')
@@ -17,17 +18,15 @@ const userData = require('./data/users.json')
 const { connectToDb } = require("./lib/mongo")
 
 connectToDb( async function () {
-    thing = await bulkInsertNewUser(userData)
-    newthing = await bulkInsertNewCourses(courseData)
-    //console.log("hello")
-    //console.log()
-    //console.log(bulkInsertNewAssignments)
-    //newerthing = await bulkInsertNewAssignments(assignmentData)
+    users = await bulkInsertNewUser(userData)
+    courses = await bulkInsertNewCourses(courseData)
+    assignments = await bulkInsertNewAssignment(assignmentData)
     // await Course.bulkCreate(courseData, { fields: courseFields })
     // await Assignment.bulkCreate(assignmentData, { fields: assignmentFields })
     // await Submission.bulkCreate(submissionData, { fields: submissionFields })
-    console.log(thing)
-    console.log(newthing)
-    //console.log(newerthing)
-    return
+    console.log(users)
+
+    closeDbConnection(function () {
+        console.log("== Init DB connection closed")
+    })
 })
