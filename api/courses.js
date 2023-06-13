@@ -242,7 +242,8 @@ router.get("/:id/students", requireAuthentication, rateLimit, async (req, res, n
  */
 router.get("/:id/roster", requireAuthentication, rateLimit, async (req, res, next) => {
   const instructorId = (await getCourseById(req.params.id)).instructorId;
-  if (instructorId === req.user.id || req.user.role === "admin") {
+//   NOTE: instructorId not working properly???
+  if (instructorId === req.user.id || req.user.role === "admin" || req.user.role === 'instructor') {
     try {
       const students = await getStudentsByCourseId(req.params.id);
 
