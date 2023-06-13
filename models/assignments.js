@@ -8,7 +8,7 @@ const assignmentSchema = {
     title: { required: true },
     points: { required: true },
     due: { required: true },
-    submissions: { required: true}
+    // submissions: { required: true}
 }
 exports.assignmentSchema = assignmentSchema 
 
@@ -20,9 +20,9 @@ async function getAssignmentById(id){
     const collection = db.collection('assignments')
 
     let assignment = null
-    if (ObjectId.isValid(userId)){
+    if (ObjectId.isValid(id)){
         // Projection to not include submissions
-        assignment = await collection.findOne({ _id: id}).project({submissions: 0})
+        assignment = await collection.findOne({ _id: new ObjectId(id) }, {submissions: 0})
     }
     return assignment
 }
@@ -45,10 +45,11 @@ exports.getAssignments = getAssignments
  * Inserts a new assignment into the DB. Returns promise that resolves to the ID of the newly-created assignment
  */
 async function insertNewAssignment(assignment){
-    user = extractValidFields(assignment, assignmentSchema)
+    assignment = extractValidFields(assignment, assignmentSchema)
     const db = getDbReference()
     const collection = db.collection('assignments')
-    const result = collection.insertOne(assignment)
+    const result = await collection.insertOne(assignment)
+    console.log(result)
     return result.insertedId
 }
 exports.insertNewAssignment = insertNewAssignment
@@ -135,6 +136,7 @@ exports.getAssignmentSubmissionsById = getAssignmentSubmissionsById
  * if it fails to find a matching assignment or the submission object is incorrect it will return undefined
  * Otherwise it will return the result of the update
  */
+// FIXME: have to change in case assignment doesnt start with any submissions
 async function insertSubmissionToAssignmentById(id, submission){
     const submissionValues = extractValidFields(submission, submissionSchema)
 
