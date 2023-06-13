@@ -1,6 +1,7 @@
 const { ObjectId } = require("mongodb")
 const { getDbReference } = require('../lib/mongo')
 const { extractValidFields } = require('../lib/validation')
+const { submissionSchema } = require('./submissions')
 
 const assignmentSchema = {
     courseId: { required: true},
@@ -56,10 +57,23 @@ async function bulkInsertNewAssignments(assignments){
 }
 exports.bulkInsertNewAssignments = bulkInsertNewAssignments
 
-async function updateAssignmentById(id){
-    // TODO...
+/*
+ * Partial update to be applied to a specified assignment
+ * If no rows changed returns undefined otherwise returns the result
+ */
+async function editAssignmentById(id, assignment){
+    const assignmentValues = extractValidFields(assignment, assignmentSchema)
+    const db = getDbReference()
+    const collection = db.collection('assignments')
+
+    let result = undefined
+    if (ObjectId.isValid(id)){
+        result = await collection.update({ _id: new ObjectId(id) }, assignmentValues)
+    }
+    
+    return result?.matchedCount > 0 ? result : undefined;
 }
-exports.updateAssignmentById = updateAssignmentById
+exports.editAssignmentById = editAssignmentById
 
 /* 
  * Removes an assignment by id returns ta writeResult on successful delete
@@ -99,8 +113,21 @@ async function getAssignmentSubmissionsById(id){
 }
 exports.getAssignmentSubmissionsById = getAssignmentSubmissionsById
 
-async function insertSubmissionToAssignmentById(id){
-    // TODO: ... technically update
+async function insertSubmissionToAssignmentById(id, submission){
+    const submissionValues = extractValidFields(submission, submissionSchema)
+
+    const db = getDbReference()
+    const collection = db.collection('assignments')
+    
+    let result = null
+    if (ObjectId.isValid(id)){
+        result = await collection.updateOne(
+            { _id: new ObjectId(id) },
+            { $push: submission}
+        )
+    }
+
+    return result?.matchedCount > 0 ? result : undefined;
 }
 exports.insertSubmissionToAssignmentById = insertSubmissionToAssignmentById
 
