@@ -112,7 +112,7 @@ router.get('/', async (req, res, next) => {
 router.patch('/:id', requireAuthentication, async (req, res, next) => {
   const id = req.params.id
   const assignment = req.body
-  const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+  
   let courseId = null
   let instructorId = null
   try{
@@ -121,8 +121,13 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
   }catch(err){
     next(err)
   }
+
+  const authorized = req?.user && req?.user?.role && req?.user?.role == 'instructor' 
+                     && instructorId && instructorId == req?.user?.id;
+
+  const isAdmin = req?.user?.role == 'admin'
   // TODO: fix auth
-  if (authorized && instructorId && instructorId == req?.user?.id) {
+  if (authorized || isAdmin) {
     try {
       const updated = await editAssignmentById(id, assignment);
 
