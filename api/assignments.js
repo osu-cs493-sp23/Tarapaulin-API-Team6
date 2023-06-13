@@ -214,7 +214,6 @@ router.get("/:id/submissions", requireAuthentication, rateLimit, async (req, res
 
 
   const isAdmin = req?.user?.role == "admin"
-  // TODO: fix auth
   if (authorized || isAdmin) {
     try {
       const submissions = await getAssignmentSubmissionsById(id, page, studentId);
