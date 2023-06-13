@@ -46,8 +46,12 @@ exports.insertNewAssignment = insertNewAssignment
  * assignment entries.
  */
 async function bulkInsertNewAssignments(assignments){
+    const { getCourses } = require('./courses')
+    const courses = await getCourses()
     const assignmentsToInsert = assignments.map(function (assignment) {
-        return extractValidFields(assignment, assignmentSchema)
+        const fields = extractValidFields(assignment, assignmentSchema)
+        fields.courseId = (courses[fields.courseId - 1])._id
+        return fields
     })
 
     const db = getDbReference()

@@ -74,6 +74,18 @@ async function getCoursesPage(page) {
 }
 exports.getCoursesPage = getCoursesPage
 
+async function getCourses() {
+    const db = getDbReference()
+    const collection = db.collection('courses')
+    const count = await collection.countDocuments()
+
+    const results = await collection.find( {} )
+        .toArray()
+
+    return results
+}
+exports.getCourses = getCourses
+
 async function getCourseById(id) {
     const db = getDbReference()
     const collection = db.collection('courses')
