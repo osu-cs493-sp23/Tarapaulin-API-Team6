@@ -113,7 +113,7 @@ async function removeAssignmentById(id){
     
     let result = null
     if (ObjectId.isValid(id)){
-        result = collection.remove({_id: new ObjectId(id)})
+        result = await collection.deleteOne({_id: new ObjectId(id)})
     }
 
     return result

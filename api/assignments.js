@@ -101,15 +101,15 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
             const updated = await editAssignmentById(id, assignment)
 
             if (updated){
-                    res.send("Updated Assignment")
+                    res.send()
             }else{
-                    res.status(500).send("Failed to update assignment")
+                    res.status(404).send({error: "Failed to update assignment"})
             }   
         }catch(err){
             next(err)
         }
     }else{
-        res.status(401).send({
+        res.status(403).send({
             error: 'invalid authorization to create assignment'
         })
     }
@@ -118,14 +118,31 @@ router.patch('/:id', requireAuthentication, async (req, res, next) => {
 /* 
  * Route to delete a specific assignment
  */
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requireAuthentication, async (req, res, next) => {
+    const id = req.params.id
+    const authorized = req?.user && req?.user?.role && (req?.user?.role == 'instructor' || req?.user?.role == 'admin')
+
+    if (authorized){
+        try{
+            const result = await removeAssignmentById(id)
+            if (result){
+                res.status(204).send()
+            }else{
+                res.status(404).send({ error: "Delete assignment id not found" })
+            }
+        }catch(err){
+            next(err)
+        }
+    }else{
+        res.status(403).send({ error: "Unauthorized request made to delete assignment" })
+    }
 })
 
 /* 
  * Route to get a list of all submissions for an assignment
  */
 router.get('/:id/submissions', async (req, res, next) => {
-
+    
 })
 
 /* 
