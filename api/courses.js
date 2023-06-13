@@ -10,7 +10,8 @@ const { CourseSchema,
         getCourseById, 
         getStudentsByCourseId,
         editCourseById,
-        removeCourseById} = require('../models/courses')
+        removeCourseById,
+        getCourses} = require('../models/courses')
 
 /* 
  * Route to get all courses (Paginated)
@@ -31,6 +32,19 @@ router.get('/', async (req, res, next) => {
             coursePage.links.prevPage = `/courses?page=${coursePage.page - 1}`
             coursePage.links.firstPage = '/courses?page=1'
         }
+        res.status(200).send(coursePage)
+    } catch (err) {
+        next(err)
+    }
+})
+
+router.get('/debug/', async (req, res, next) => {
+    try {
+        /*
+         * Fetch page info, generate HATEOAS links for surrounding pages and then
+         * send response.
+         */
+        const coursePage = await getCourses()
         res.status(200).send(coursePage)
     } catch (err) {
         next(err)
@@ -130,16 +144,23 @@ router.delete('/:id', requireAuthentication, async (req, res, next) => {
 /* 
  * Route to get students in a course
  */
-router.get('/:id/students', async (req, res, next) => {
-    try {
-        const course = await getStudentsByCourseId(req.params.id)
-        if (course) {
-            res.status(200).send(course)
-        } else {
-            next()
+router.get('/:id/students', requireAuthentication, async (req, res, next) => {
+    const instructorId = (await getCourseById(req.params.id)).instructorId 
+    if(instructorId == req.user.id || req.user.role == "admin"){
+        try {
+            const course = await getStudentsByCourseId(req.params.id)
+            if (course) {
+                res.status(200).send(course)
+            } else {
+                next()
+            }
+        } catch (err) {
+            next(err)
         }
-    } catch (err) {
-        next(err)
+    } else {
+        res.status(403).send({
+            error: "User does not have permission to preform this action."
+        })
     }
 })
 
